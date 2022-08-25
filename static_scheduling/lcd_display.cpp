@@ -6,9 +6,9 @@ LCDDisplay::LCDDisplay()
 {
 }
 
-void LCDDisplay::show(int currentGear, int currentRotationCount, int subTaskIndex)
+void LCDDisplay::show(uint8_t currentGear, uint32_t currentRotationCount, uint8_t subTaskIndex)
 {
-    if (subTaskIndex == -1) {
+    if (subTaskIndex == UINT8_MAX) {
         // simulate task computation by waiting for the required task run time
         wait_us(kTaskRunTime.count());
         // use printf since we want to print in any case

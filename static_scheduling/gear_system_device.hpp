@@ -27,7 +27,7 @@ private:
 
     // data members
     USBSerial _usbSerial;
-    int _currentGear = 0;
+    uint8_t _currentGear = 0;
     Thread _thread;
 };
 

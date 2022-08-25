@@ -65,7 +65,7 @@ void BikeSystem::updateWheelRotationCount()
     gTaskLogger.logPeriodAndExecutionTime(_timer, TaskLogger::kCountTaskIndex, taskStartTime);
 }
 
-void BikeSystem::updateDisplay(int subTaskIndex)
+void BikeSystem::updateDisplay(uint8_t subTaskIndex)
 {
     std::chrono::microseconds taskStartTime = _timer.elapsed_time();
 

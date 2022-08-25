@@ -14,10 +14,9 @@ public:
     // method called for resetting the counter
     void reset();
 
+private:
     // definition of task period time
     static constexpr std::chrono::milliseconds kTaskPeriod = 400ms;
-
-private:
     // definition of task execution time
     static constexpr std::chrono::microseconds kTaskRunTime = 200000us;
     // definition of wheel rotation time
@@ -25,7 +24,7 @@ private:
 
     // data members
     LowPowerTicker _ticker;
-    int _rotationCount = 0;
+    uint32_t _rotationCount = 0;
 
     // private methods
     void turn();

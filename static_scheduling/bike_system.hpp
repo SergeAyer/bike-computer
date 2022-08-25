@@ -21,12 +21,12 @@ private:
     void updateCurrentGear();
     void updateWheelRotationCount();
     void checkAndPerformReset();
-    void updateDisplay(int subTaskIndex);
+    void updateDisplay(uint8_t subTaskIndex);
 
     // number of wheel rotation (read from the device)
-    int _wheelRotationCount = 0;
+    uint32_t _wheelRotationCount = 0;
     // current gear (read from the device)
-    int _gear = 0;
+    uint8_t _gear = 0;
     // timer instance used for loggint task time and used by ResetDevice
     Timer _timer;
     // data member that represents the device for manipulating the gear
