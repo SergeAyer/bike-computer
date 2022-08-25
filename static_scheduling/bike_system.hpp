@@ -9,14 +9,17 @@ namespace static_scheduling {
 
 class BikeSystem {
 public:
+    // constructor
     BikeSystem();
 
+    // method called in main() for starting the system
     void start();
 
 private:
+    // private methods 
+    // called from the start() method super-loop for executing each task
     void updateCurrentGear();
     void updateWheelRotationCount();
-
     void checkAndPerformReset();
     void updateDisplay(int subTaskIndex);
 
@@ -24,6 +27,8 @@ private:
     int _wheelRotationCount = 0;
     // current gear (read from the device)
     int _gear = 0;
+    // timer instance used for loggint task time and used by ResetDevice
+    Timer _timer;
     // data member that represents the device for manipulating the gear
     GearSystemDevice _gearSystemDevice;
     // data member that represents the device for counting wheel rotations
@@ -32,16 +37,6 @@ private:
     ResetDevice _resetDevice;
     // data member that represents the device display
     LCDDisplay _lcdDisplay;
-
-    void logPeriodAndExecutionTime(int taskIndex, const std::chrono::microseconds &taskStartTime);
-    Timer _timer;
-    static constexpr int kNbrOfTasks = 4;
-    static constexpr int kResetTaskIndex = 0;
-    static constexpr int kGearTaskIndex = 1;
-    static constexpr int kCountTaskIndex = 2;
-    static constexpr int kDisplayTaskIndex = 3;
-    static constexpr char *kTaskDescriptors[] = { (char *) "Reset", (char *) "Gear", (char *) "Count", (char *) "Display"};
-    std::chrono::microseconds _taskStartTime[kNbrOfTasks];
 };
 
 } // namespace static_scheduling

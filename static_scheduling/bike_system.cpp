@@ -1,4 +1,5 @@
 #include "static_scheduling/bike_system.hpp"
+#include "static_scheduling/task_logger.hpp"
 
 #include "mbed_trace.h"
 #if MBED_CONF_MBED_TRACE_ENABLE
@@ -6,6 +7,9 @@
 #endif // MBED_CONF_MBED_TRACE_ENABLE
 
 namespace static_scheduling {
+
+// for hidding the logging from the header file, declare a global variable for logging
+static TaskLogger gTaskLogger;
 
 BikeSystem::BikeSystem() : _resetDevice(_timer)
 {
@@ -49,7 +53,7 @@ void BikeSystem::updateCurrentGear()
 
     _gear = _gearSystemDevice.getCurrentGear();
 
-    logPeriodAndExecutionTime(kGearTaskIndex, taskStartTime);
+    gTaskLogger.logPeriodAndExecutionTime(_timer, TaskLogger::kGearTaskIndex, taskStartTime);
 }
 
 void BikeSystem::updateWheelRotationCount()
@@ -58,7 +62,7 @@ void BikeSystem::updateWheelRotationCount()
 
     _wheelRotationCount = _wheelCounterDevice.getCurrentRotationCount();
 
-    logPeriodAndExecutionTime(kCountTaskIndex, taskStartTime);
+    gTaskLogger.logPeriodAndExecutionTime(_timer, TaskLogger::kCountTaskIndex, taskStartTime);
 }
 
 void BikeSystem::updateDisplay(int subTaskIndex)
@@ -67,7 +71,7 @@ void BikeSystem::updateDisplay(int subTaskIndex)
 
     _lcdDisplay.show(_gear, _wheelRotationCount, subTaskIndex);
 
-    logPeriodAndExecutionTime(kDisplayTaskIndex, taskStartTime);
+    gTaskLogger.logPeriodAndExecutionTime(_timer, TaskLogger::kDisplayTaskIndex, taskStartTime);
 }
 
 void BikeSystem::checkAndPerformReset()
@@ -79,20 +83,7 @@ void BikeSystem::checkAndPerformReset()
         _wheelCounterDevice.reset();
     }
 
-    logPeriodAndExecutionTime(kResetTaskIndex, taskStartTime);
-}
-
-void BikeSystem::logPeriodAndExecutionTime(int taskIndex, const std::chrono::microseconds &taskStartTime)
-{
-    std::chrono::microseconds periodTime = taskStartTime - _taskStartTime[taskIndex];
-    _taskStartTime[taskIndex] = taskStartTime;
-    std::chrono::microseconds taskEndTime = _timer.elapsed_time();
-    std::chrono::microseconds executionTime = taskEndTime - _taskStartTime[taskIndex];
-    tr_debug("%s task: period %d usecs execution time %d usecs start time %d usecs",
-             kTaskDescriptors[taskIndex],
-             (int) periodTime.count(),
-             (int) executionTime.count(),
-             (int) _taskStartTime[taskIndex].count());
+    gTaskLogger.logPeriodAndExecutionTime(_timer, TaskLogger::kResetTaskIndex, taskStartTime);
 }
 
 } // namespace static_scheduling
