@@ -1,6 +1,6 @@
-#include "static_scheduling/wheel_counter_device.hpp"
+#include "static_scheduling_with_event/wheel_counter_device.hpp"
 
-namespace static_scheduling {
+namespace static_scheduling_with_event {
 
 WheelCounterDevice::WheelCounterDevice()
 {
@@ -28,4 +28,4 @@ void WheelCounterDevice::turn()
     _rotationCount++;
 }
 
-} // namespace static_scheduling
+} // namespace static_scheduling_with_event

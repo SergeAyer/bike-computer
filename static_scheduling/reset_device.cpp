@@ -1,4 +1,4 @@
-#include "reset_device.hpp"
+#include "static_scheduling/reset_device.hpp"
 
 #if defined(TARGET_DISCO_L475VG_IOT01A)
 #define PUSH_BUTTON BUTTON1

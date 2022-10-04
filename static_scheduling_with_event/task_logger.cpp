@@ -1,11 +1,11 @@
-#include "static_scheduling/task_logger.hpp"
+#include "static_scheduling_with_event/task_logger.hpp"
 
 #include "mbed_trace.h"
 #if MBED_CONF_MBED_TRACE_ENABLE
 #define TRACE_GROUP "TaskLogger"
 #endif // MBED_CONF_MBED_TRACE_ENABLE
 
-namespace static_scheduling {
+namespace static_scheduling_with_event {
 
 void TaskLogger::logPeriodAndExecutionTime(Timer &timer, int taskIndex, const std::chrono::microseconds &taskStartTime)
 {
@@ -20,4 +20,4 @@ void TaskLogger::logPeriodAndExecutionTime(Timer &timer, int taskIndex, const st
              (int) _taskStartTime[taskIndex].count());
 }
 
-} // namespace static_scheduling
+} // namespace static_scheduling_with_event

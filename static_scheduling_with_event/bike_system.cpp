@@ -1,23 +1,25 @@
-#include "static_scheduling/bike_system.hpp"
-#include "static_scheduling/task_logger.hpp"
+#include "static_scheduling_with_event/bike_system.hpp"
+#include "static_scheduling_with_event/task_logger.hpp"
 
 #include "mbed_trace.h"
 #if MBED_CONF_MBED_TRACE_ENABLE
 #define TRACE_GROUP "BikeSystem"
 #endif // MBED_CONF_MBED_TRACE_ENABLE
 
-namespace static_scheduling {
+namespace static_scheduling_with_event {
 
 // for hidding the logging from the header file, declare a global variable for logging
 static TaskLogger gTaskLogger;
 
-BikeSystem::BikeSystem() : _resetDevice(_timer)
+BikeSystem::BikeSystem() : 
+    _resetDevice(callback(this, &BikeSystem::setReset)),
+    _gearSystemDevice(callback(this, &BikeSystem::setNewGear))
 {
 }
 
 void BikeSystem::start()
 {
-    tr_info("Starting Super-Loop with no event handling");
+    tr_info("Starting Super-Loop with event handling");
 
     // start the timer
     _timer.start();
@@ -27,19 +29,44 @@ void BikeSystem::start()
         std::chrono::microseconds startTime = _timer.elapsed_time();
 
         // perform tasks as documented in the timetable
-        updateCurrentGear();
         updateWheelRotationCount();
         updateDisplay(0);
-        checkAndPerformReset();
         updateWheelRotationCount();
         updateDisplay(1);
-        updateCurrentGear();
-        updateWheelRotationCount();
-        updateDisplay(2);
-        checkAndPerformReset();
+
+        if (_reset) {
+          performReset();
+          _reset = false;
+        }
+        wait_us(kTime_100ms.count());
+
         updateWheelRotationCount();
 
-        ThisThread::sleep_for(std::chrono::milliseconds(100));
+        if (_newGear) {
+          updateCurrentGear();
+          _newGear = false;
+        }
+        wait_us(kTime_100ms.count());
+
+        if (_reset) {
+          performReset();
+          _reset = false;
+        }        
+        wait_us(kTime_100ms.count());
+
+        updateWheelRotationCount();
+
+        if (_newGear) {
+          updateCurrentGear();
+          _newGear = false;
+        }
+        wait_us(kTime_100ms.count());
+
+        if (_reset) {
+          performReset();
+          _reset = false;
+        }        
+        wait_us(kTime_100ms.count());
 
         // register the time at the end of the cyclic schedule period and print the elapsed time for the period
         std::chrono::microseconds endTime = _timer.elapsed_time();
@@ -47,13 +74,16 @@ void BikeSystem::start()
     }
 }
 
+void BikeSystem::setNewGear() 
+{
+    _newGear = true;
+}
+
 void BikeSystem::updateCurrentGear()
 {
-    std::chrono::microseconds taskStartTime = _timer.elapsed_time();
-
-    _gear = _gearSystemDevice.getCurrentGear();
-
-    gTaskLogger.logPeriodAndExecutionTime(_timer, TaskLogger::kGearTaskIndex, taskStartTime);
+    // get the new gear 
+    uint32_t gear = _gearSystemDevice.getCurrentGear();
+    core_util_atomic_store_u8(&_gear, gear);
 }
 
 void BikeSystem::updateWheelRotationCount()
@@ -74,16 +104,18 @@ void BikeSystem::updateDisplay(uint8_t subTaskIndex)
     gTaskLogger.logPeriodAndExecutionTime(_timer, TaskLogger::kDisplayTaskIndex, taskStartTime);
 }
 
-void BikeSystem::checkAndPerformReset()
+void BikeSystem::performReset()
 {
     std::chrono::microseconds taskStartTime = _timer.elapsed_time();
 
-    if (_resetDevice.checkReset()) {
-        tr_info("Reset task: response time is %d usecs", (int)(_timer.elapsed_time().count() - _resetDevice.getFallTime().count()));
-        _wheelCounterDevice.reset();
-    }
-
-    gTaskLogger.logPeriodAndExecutionTime(_timer, TaskLogger::kResetTaskIndex, taskStartTime);
+    tr_info("Reset task: response time is %d usecs", (int)(_timer.elapsed_time().count() - _resetTime.count()));
+    _wheelCounterDevice.reset();
 }
 
-} // namespace static_scheduling
+void BikeSystem::setReset() 
+{
+    _resetTime = _timer.elapsed_time();
+    _reset = true;
+}
+
+} // namespace static_scheduling_with_event
