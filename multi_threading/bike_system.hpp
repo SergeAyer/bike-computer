@@ -39,10 +39,6 @@ private:
     ResetDevice _resetDevice;
     // data member that represents the device display
     LCDDisplay _lcdDisplay;
-    // total rotation count
-    volatile uint32_t _totalRotationCount = 0;
-    // current gear
-    volatile uint32_t _currentGear = 0;
 };
 
 } // namespace multi_threading

@@ -17,9 +17,9 @@ int main()
     mbed_trace_init();
  
     // declare the BikeSystem instance
-    static_scheduling::BikeSystem bikeSystem;
+    //static_scheduling::BikeSystem bikeSystem;
     // static_scheduling_with_event::BikeSystem bikeSystem;
-    // multi_threading::BikeSystem bikeSystem;
+    multi_threading::BikeSystem bikeSystem;
     // multi_tasking::BikeSystem bikeSystem;
 
     // will start the BikeSystem and never return

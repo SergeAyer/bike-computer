@@ -24,7 +24,6 @@ private:
     Ticker _ticker;
     Thread _thread;
     EventQueue _eventQueue;
-    uint32_t _rotationCount = 0;
 
     // private methods
     void turn();

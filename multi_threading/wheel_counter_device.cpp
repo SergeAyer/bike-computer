@@ -1,11 +1,12 @@
 #include "multi_threading/wheel_counter_device.hpp"
 #include "multi_threading/task_logger.hpp"
-#include "multi_threading/wait.h"
+#include "multi_threading/busy_wait.h"
 
 namespace multi_threading {
 
 // for hidding the logging from the header file, declare a global variable for logging
 extern TaskLogger gTaskLogger;
+extern uint32_t gCurrentRotationCount;
 
 WheelCounterDevice::WheelCounterDevice(Timer &timer) : 
     _timer(timer),
@@ -27,7 +28,7 @@ void WheelCounterDevice::turn()
 {
     // ISR context
     // increment rotation count
-    _rotationCount++;
+    core_util_atomic_incr_u32(&gCurrentRotationCount, 1);
 }
 
 void WheelCounterDevice::updateWheelRotationCount()

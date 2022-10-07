@@ -1,7 +1,7 @@
 #include "multi_threading/bike_system.hpp"
 #include "multi_threading/task_logger.hpp"
 #include "multi_threading/thread_logger.hpp"
-#include "multi_threading/wait.h"
+#include "multi_threading/busy_wait.h"
 
 #include "mbed_trace.h"
 
@@ -13,6 +13,12 @@ namespace multi_threading {
 
 // for hidding the logging from the header file, declare a global variable for logging
 TaskLogger gTaskLogger;
+
+// global variables used for exchanging information among threads
+// this is of course not a proper way of exchanging information in a 
+// multi-threaded application
+uint8_t gCurrentGear = 0;
+uint32_t gCurrentRotationCount = 0;
 
 BikeSystem::BikeSystem() : 
   _resetDevice(callback(this, &BikeSystem::setReset)),
@@ -66,7 +72,7 @@ void BikeSystem::updateCurrentGear()
 {
     // get the new gear 
     uint32_t gear = _gearSystemDevice.getCurrentGear();
-    core_util_atomic_store_u32(&_currentGear, gear);
+    core_util_atomic_store_u8(&gCurrentGear, gear);
 }
 
 
@@ -74,7 +80,7 @@ void BikeSystem::performReset()
 {
     tr_info("Reset task: response time is %d usecs", (int)(_timer.elapsed_time().count() - _resetTime.count()));
 
-    core_util_atomic_store_u32(&_totalRotationCount, 0);  
+    core_util_atomic_store_u32(&gCurrentRotationCount, 0);  
 }
 
 

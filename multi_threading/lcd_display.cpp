@@ -1,11 +1,13 @@
 #include "multi_threading/lcd_display.hpp"
 #include "multi_threading/task_logger.hpp"
-#include "multi_threading/wait.h"
+#include "multi_threading/busy_wait.h"
 
 namespace multi_threading {
 
-// for hidding the logging from the header file, declare a global variable for logging
+// extern global variables
 extern TaskLogger gTaskLogger;
+extern uint8_t gCurrentGear;
+extern uint32_t gCurrentRotationCount;
 
 LCDDisplay::LCDDisplay(Timer &timer) : 
     _timer(timer),
@@ -27,7 +29,7 @@ void LCDDisplay::displayInfo()
     //wait_us(kTaskRunTime.count());
     busy_wait_ms(std::chrono::duration_cast<std::chrono::milliseconds>(kTaskRunTime).count());
 
-    // printf("Gear value is %d, wheel rotation count is %d\n", currentGear, currentRotationCount);
+    printf("Gear value is %d, wheel rotation count is %d\n", gCurrentGear, gCurrentRotationCount);
     
     gTaskLogger.logPeriodAndExecutionTime(_timer, TaskLogger::kDisplayTaskIndex, taskStartTime);
 }
