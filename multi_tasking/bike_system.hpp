@@ -21,6 +21,7 @@ private:
     void setNewGear();
     void updateCurrentGear();
     void performReset();
+    void processData();
     
     // called as reset handler
     void setReset();
@@ -29,6 +30,9 @@ private:
     // data members used for exchanging information among threads
     CountQueue _countQueue;
     ProcessedMail _processedMail;
+    
+    // thread used for processing data
+    Thread _processingThread;
     
     // EventQueue used for serving deferred ISRs
     EventQueue _eventQueueForISRs;

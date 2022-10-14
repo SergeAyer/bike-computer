@@ -20,9 +20,9 @@ void LCDDisplay::displayInfo()
         ProcessedData* pProcessedData = _processedMail.try_get_for(Kernel::wait_for_u32_forever);
         
         float speed = pProcessedData->averageSpeed;
-        float power = pProcessedData->averagePower;
+        float rotationRate = pProcessedData->averageRotationRate;
     
-        printf("Average speed is %f with power %f\n", speed, power);
+        printf("Average speed is %f km/h with rotation rate %f (rotation/sec)\n", speed, rotationRate);
         _processedMail.free(pProcessedData);    
     }    
 }

@@ -1,7 +1,6 @@
 {
     "macros": [
-      "MBED_CONF_MBED_TRACE_FEA_IPV6=0",
-      "OS_ROBIN_ENABLE=0"
+      "MBED_CONF_MBED_TRACE_FEA_IPV6=0"
     ],
     "config": {
       "main-stack-size": {
