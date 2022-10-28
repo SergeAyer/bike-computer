@@ -20,7 +20,7 @@ public:
         for (int i = 0; i < kArraySize; i++) {
             _doubleArray[i] += anotherArray[i];
         }
-        //_multiplier++;
+        _multiplier++;
     }
 
 private:
