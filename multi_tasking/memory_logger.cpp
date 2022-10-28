@@ -5,6 +5,13 @@
 #define TRACE_GROUP "MemoryLogger"
 #endif // MBED_CONF_MBED_TRACE_ENABLE
 
+#if defined(MBED_ALL_STATS_ENABLED)
+extern unsigned char* mbed_stack_isr_start;
+extern uint32_t mbed_stack_isr_size;
+extern unsigned char* mbed_heap_start;
+extern uint32_t mbed_heap_size;
+#endif // MBED_ALL_STATS_ENABLED
+
 namespace multi_tasking {
 
 #if defined(MBED_ALL_STATS_ENABLED)
@@ -105,6 +112,29 @@ void MemoryLogger::getAndPrintStatistics()
 {
     getAndPrintHeapStatistics();
     getAndPrintStackStatistics();
+}
+
+void MemoryLogger::printRuntimeMemoryMap() {
+  // defined in rtx_thread.c
+  // uint32_t osThreadEnumerate (osThreadId_t *thread_array, uint32_t array_items)
+  tr_debug("Runtime Memory Map:");
+  osThreadId_t threadIdArray[kMaxThreadInfo] = {0};
+  uint32_t nbrOfThreads = osThreadEnumerate(threadIdArray, kMaxThreadInfo);
+  for (uint32_t threadIndex = 0; threadIndex < nbrOfThreads; threadIndex++) {
+        osRtxThread_t* pThreadCB = (osRtxThread_t*) threadIdArray[threadIndex];
+        uint8_t state = pThreadCB->state & osRtxThreadStateMask;
+        const char* szThreadState = (state & osThreadInactive) ? "Inactive" : (state & osThreadReady) ? "Ready" :
+          (state & osThreadRunning) ? "Running" : (state & osThreadBlocked) ? "Blocked" : (state & osThreadTerminated) ? "Terminated" : "Unknown";
+         tr_debug("\t thread with name %s, stack_start: %p, stack_end: %p, size: %u, priority: %d, state: %s",
+                  pThreadCB->name, pThreadCB->stack_mem,
+                  (char*) pThreadCB->stack_mem + pThreadCB->stack_size,
+                  pThreadCB->stack_size,
+                  pThreadCB->priority,
+                  szThreadState);
+  }
+  tr_debug("\t mbed_heap_start: %p, mbed_heap_end: %p, size: %u", 
+          mbed_heap_start, (mbed_heap_start + mbed_heap_size), mbed_heap_size);
+  tr_debug("\t mbed_stack_isr_start: %p, mbed_stack_isr_end: %p, size: %u", mbed_stack_isr_start, (mbed_stack_isr_start + mbed_stack_isr_size), mbed_stack_isr_size);
 }
 
 #endif // MBED_ALL_STATS_ENABLED

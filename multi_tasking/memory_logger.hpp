@@ -11,11 +11,12 @@ public:
     // methods used by owners
     void getAndPrintStatistics();
     void printDiffs();
-private:
-    // private methods
+    void printRuntimeMemoryMap();
+    
     void getAndPrintHeapStatistics();
     void getAndPrintStackStatistics();
     
+private:
     // data members
     static constexpr uint8_t kMaxThreadInfo = 10;
     mbed_stats_heap_t _heapInfo = {0};
