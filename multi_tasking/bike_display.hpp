@@ -13,37 +13,45 @@
 // limitations under the License.
 
 /****************************************************************************
- * @file wheel_counter_device.cpp
+ * @file bike_display.hpp
  * @author Serge Ayer <serge.ayer@hefr.ch>
  *
- * @brief Wheel counter device implementation
+ * @brief Bike Display header file
  *
- * @date 2022-07-05
- * @version 0.1.0
+ * @date 2023-07-05
+ * @version 0.0.1
  ***************************************************************************/
 
-#include "multi_tasking/wheel_counter_device.hpp"
+#pragma once
+
+#include "mbed.h"
+#include "multi_tasking/data_types.hpp"
 
 namespace multi_tasking {
 
-WheelCounterDevice::WheelCounterDevice(CountQueue& countQueue)
-    : _countQueue(countQueue) {}
+class BikeDisplay {
+   public:
+    explicit BikeDisplay(ProcessedMail& processedMail);  // NOLINT(runtime/references)
 
-void WheelCounterDevice::start() {
-    // start a ticker for signaling a wheel rotation
-    _ticker.attach(callback(this, &WheelCounterDevice::turn), kWheelRotationTime);
-}
+    // the LCD display runs its own thread
+    void start();
 
-void WheelCounterDevice::turn() {
-    // ISR context
-    // increment rotation count
-    _rotationCount++;
-    // try to push the data to the queue, if successful reset the rotation count
-    if (_rotationCount > kNbrOfRotationsForPut &&
-        // NOLINTNEXTLINE(readability/casting)
-        _countQueue.try_put((uint32_t*)_rotationCount)) {
-        _rotationCount = 0;
-    }
-}
+    struct ImageInfo {
+        const uint32_t* pImageData;
+        const uint8_t imageWidth;
+        const uint8_t imageHeight;
+    };
+
+    void displayGear(uint8_t gear);
+
+   private:
+    // private methods
+    void displayInfo();
+
+    // data members
+    ProcessedMail& _processedMail;
+    Thread _thread;
+    static const BikeDisplay::ImageInfo _imageInfo[2];
+};
 
 }  // namespace multi_tasking

@@ -1,39 +1,66 @@
+// Copyright 2022 Haute école d'ingénierie et d'architecture de Fribourg
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+/****************************************************************************
+ * @file bike_system.hpp
+ * @author Serge Ayer <serge.ayer@hefr.ch>
+ *
+ * @brief Bike System header file
+ *
+ * @date 2022-07-05
+ * @version 0.1.0
+ ***************************************************************************/
+
 #pragma once
 
+#include "bike_display.hpp"
 #include "gear_system_device.hpp"
-#include "wheel_counter_device.hpp"
+#include "memory_logger.hpp"
 #include "reset_device.hpp"
-#include "lcd_display.hpp"
-#include <chrono>
+#include "wheel_counter_device.hpp"
 
 namespace multi_tasking {
 
 class BikeSystem {
-public:
+   public:
     // constructor
     BikeSystem();
 
     // method called in main() for starting the system
     void start();
 
-private:
-    // private methods 
-    void setNewGear();
-    void updateCurrentGear();
+   private:
+    // private methods
+    void setNewGear(uint8_t newGear);
+    void updateCurrentGear(uint8_t newGear);
     void performReset();
     void processData();
-    
+
     // called as reset handler
     void setReset();
     std::chrono::microseconds _resetTime;
- 
+
+    // memory logger
+    MemoryLogger _memoryLogger;
+
     // data members used for exchanging information among threads
     CountQueue _countQueue;
     ProcessedMail _processedMail;
-    
+
     // thread used for processing data
     Thread _processingThread;
-    
+
     // EventQueue used for serving deferred ISRs
     EventQueue _eventQueueForISRs;
 
@@ -46,11 +73,9 @@ private:
     // data member that represents the device used for resetting
     ResetDevice _resetDevice;
     // data member that represents the device display
-    LCDDisplay _lcdDisplay;
+    BikeDisplay _bikeDisplay;
     // total rotation count
     volatile uint32_t _totalRotationCount = 0;
-    // current gear
-    volatile uint32_t _currentGear = 0;
 };
 
-} // namespace multi_tasking
+}  // namespace multi_tasking
