@@ -41,7 +41,6 @@ class WheelCounterDevice {
 
    private:
     // definition of wheel rotation time
-    static constexpr std::chrono::milliseconds kWheelRotationTime = 200ms;
     static constexpr uint32_t kNbrOfRotationsForPut               = 5;
 
     // data members

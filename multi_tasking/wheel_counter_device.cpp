@@ -25,6 +25,8 @@
 #include "multi_tasking/wheel_counter_device.hpp"
 
 namespace multi_tasking {
+    
+static constexpr std::chrono::milliseconds kWheelRotationTime = 200ms;
 
 WheelCounterDevice::WheelCounterDevice(CountQueue& countQueue)
     : _countQueue(countQueue) {}
