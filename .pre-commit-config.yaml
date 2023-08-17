@@ -28,4 +28,4 @@ repos:
       name: cppcheck
       entry: cppcheck
       language: system
-      args: [-IDISCO_H747I/Wrappers]
+      args: [-IDISCO_H747I/Wrappers --std=c++14]
