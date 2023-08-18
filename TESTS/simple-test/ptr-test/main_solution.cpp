@@ -28,6 +28,9 @@
 #include "utest/utest.h"
 
 using namespace utest::v1;
+
+namespace solution {
+
 struct Test {
     Test() {
         _instanceCount++;
@@ -94,6 +97,70 @@ void test_instance_sharing() {
     TEST_ASSERT_EQUAL(0, Test::_instanceCount);
 }
 
+/**
+ * Test that multiple instances of unique pointers correctly manage the
+ * ownership of the the object
+ */
+void test_unique_ptr() {
+    std::unique_ptr<Test> unique_ptr1(nullptr);
+
+    // Sanity-check value of counter
+    TEST_ASSERT_EQUAL(0, Test::_instanceCount);
+
+    // Create and destroy shared pointer in given scope
+    {
+        std::unique_ptr<Test> unique_ptr2(new Test);
+        TEST_ASSERT_EQUAL(1, Test::_instanceCount);
+        // share share_ptr2 with shared_ptr1
+        // unique_ptr1 = unique_ptr2; is not allowed
+        // must use the std::move() semantics
+        unique_ptr1 = std::move(unique_ptr2);
+        // still one instance only
+        TEST_ASSERT_EQUAL(1, Test::_instanceCount);
+        TEST_ASSERT_EQUAL(Test::kMagicNumber, unique_ptr1->_value);
+        TEST_ASSERT_EQUAL(nullptr, unique_ptr2.get());
+    }
+
+    // shared_ptr1 still owns a raw pointer
+    TEST_ASSERT_EQUAL(1, Test::_instanceCount);
+
+    unique_ptr1 = nullptr;
+
+    // Shared pointer has been destroyed
+    TEST_ASSERT_EQUAL(0, Test::_instanceCount);
+}
+
+/**
+ * Test that when delete is not called with a raw pointer then a memory leak occurs
+ */
+void test_raw_pointers() {
+    Test* raw_ptr1(nullptr);
+
+    // Sanity-check value of counter
+    TEST_ASSERT_EQUAL(0, Test::_instanceCount);
+
+    // Create and destroy shared pointer in given scope
+    {
+        raw_ptr1 = new Test;
+        TEST_ASSERT_EQUAL(1, Test::_instanceCount);
+        Test* raw_ptr2 = raw_ptr1;
+        // still one instance only
+        TEST_ASSERT_EQUAL(1, Test::_instanceCount);
+        TEST_ASSERT_EQUAL(Test::kMagicNumber, raw_ptr1->_value);
+        TEST_ASSERT(raw_ptr1 == raw_ptr2);
+    }
+
+    // now delete called yet
+    TEST_ASSERT_EQUAL(1, Test::_instanceCount);
+
+    raw_ptr1 = nullptr;
+
+    // we lost the reference but the instance count is still 1 -> memory leak
+    TEST_ASSERT_EQUAL(1, Test::_instanceCount);
+}
+
+}  // namespace solution
+
 static utest::v1::status_t greentea_setup(const size_t number_of_cases) {
     // Here, we specify the timeout (60s) and the host test (a built-in host test or the
     // name of our Python file)
@@ -103,9 +170,13 @@ static utest::v1::status_t greentea_setup(const size_t number_of_cases) {
 
 // List of test cases in this file
 static Case cases[] = {
-    Case("Test single shared pointer instance", test_single_sharedptr_lifetime),
-    Case("Test instance sharing across multiple shared pointers", test_instance_sharing)};
+    Case("Test single shared pointer instance", solution::test_single_sharedptr_lifetime),
+    Case("Test instance sharing across multiple shared pointers",
+         solution::test_instance_sharing),
+    Case("Test instance ownership across multiple unique pointers",
+         solution::test_unique_ptr),
+    Case("Test memory leak with raw pointers", solution::test_raw_pointers)};
 
 static Specification specification(greentea_setup, cases);
 
-int main() { return !Harness::run(specification); }
+int main_solution() { return !Harness::run(specification); }

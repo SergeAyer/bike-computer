@@ -38,7 +38,7 @@ static control_t always_succeed(const size_t call_count) {
     return CaseNext;
 }
 
-utest::v1::status_t greentea_setup(const size_t number_of_cases) {
+static utest::v1::status_t greentea_setup(const size_t number_of_cases) {
     // Here, we specify the timeout (60s) and the host test (a built-in host test or the
     // name of our Python file)
     GREENTEA_SETUP(60, "default_auto");
@@ -47,8 +47,8 @@ utest::v1::status_t greentea_setup(const size_t number_of_cases) {
 }
 
 // List of test cases in this file
-Case cases[] = {Case("always succeed test", always_succeed)};
+static Case cases[] = {Case("always succeed test", always_succeed)};
 
-Specification specification(greentea_setup, cases);
+static Specification specification(greentea_setup, cases);
 
 int main() { return !Harness::run(specification); }

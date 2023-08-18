@@ -187,7 +187,7 @@ void test_put_full_waitforever() {
     t.join();
 }
 
-utest::v1::status_t greentea_setup(const size_t number_of_cases) {
+static utest::v1::status_t greentea_setup(const size_t number_of_cases) {
     // Here, we specify the timeout (60s) and the host test (a built-in host test or the
     // name of our Python file)
     GREENTEA_SETUP(60, "default_auto");
@@ -196,12 +196,12 @@ utest::v1::status_t greentea_setup(const size_t number_of_cases) {
 }
 
 // List of test cases in this file
-Case cases[] = {
+static Case cases[] = {
     Case("try to get an element from empty queue without timeout", get_empty_no_timeout),
     Case("try to put an element to full queue with timeout", put_full_timeout),
     Case("try to get elements from empty queue forever", test_get_empty_waitforever),
     Case("try to put elements to full queue forever", test_put_full_waitforever)};
 
-Specification specification(greentea_setup, cases);
+static Specification specification(greentea_setup, cases);
 
 int main() { return !Harness::run(specification); }
