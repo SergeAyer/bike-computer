@@ -16,7 +16,7 @@
  * @file main.cpp
  * @author Serge Ayer <serge.ayer@hefr.ch>
  *
- * @brief Simple example of test program that always succeeds
+ * @brief Simple example of test program for raw and shared pointers
  *
  * @date 2022-09-01
  * @version 0.1.0
@@ -28,26 +28,51 @@
 #include "utest/utest.h"
 
 using namespace utest::v1;
+struct Test {
+    Test() {
+        _instanceCount++;
+        _value = kMagicNumber;
+    }
 
-// test handler function
-static control_t always_succeed(const size_t call_count) {
-    // this is the always succeed test
-    TEST_ASSERT_EQUAL(4, 2 * 2);
+    ~Test() {
+        _instanceCount--;
+        _value = 0;
+    }
 
-    // execute the test only once and move to the next one, without waiting
-    return CaseNext;
+    int _value;
+    static constexpr uint32_t kMagicNumber = 33;
+    static uint32_t _instanceCount;
+};
+uint32_t Test::_instanceCount = 0;
+
+/**
+ * Test that a shared pointer correctly manages the lifetime of the underlying raw pointer
+ */
+void test_single_sharedptr_lifetime() {
+    // Sanity-check value of counter
+    TEST_ASSERT_EQUAL(0, Test::_instanceCount);
+
+    // Create and destroy shared pointer in given scope
+    {
+        std::shared_ptr<Test> shared_ptr(new Test);
+        TEST_ASSERT_EQUAL(1, Test::_instanceCount);
+        TEST_ASSERT_EQUAL(Test::kMagicNumber, shared_ptr->_value);
+    }
+
+    // Destroy shared pointer
+    TEST_ASSERT_EQUAL(0, Test::_instanceCount);
 }
 
 utest::v1::status_t greentea_setup(const size_t number_of_cases) {
     // Here, we specify the timeout (60s) and the host test (a built-in host test or the
     // name of our Python file)
     GREENTEA_SETUP(60, "default_auto");
-
     return greentea_test_setup_handler(number_of_cases);
 }
 
 // List of test cases in this file
-Case cases[] = {Case("always succeed test", always_succeed)};
+Case cases[] = {
+    Case("Test single shared pointer instance", test_single_sharedptr_lifetime)};
 
 Specification specification(greentea_setup, cases);
 

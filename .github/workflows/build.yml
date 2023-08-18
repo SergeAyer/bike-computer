@@ -26,5 +26,5 @@ jobs:
         run: |
           set -e
           mbed deploy
-          mbed test -t GCC_ARM -m ${{ matrix.target }} --profile ${{ matrix.profile }} --compile -n tests-simple-test-always-succeed --app-config mbed_app_wo_bl.json
+          mbed test -t GCC_ARM -m ${{ matrix.target }} --profile ${{ matrix.profile }} --compile -n tests-simple-test-always-succeed,tests-simple-test-ptr-test,tests-buffer-test-simple-test --app-config mbed_app_wo_bl.json
           mbed compile -t GCC_ARM -m ${{ matrix.target }} --profile ${{ matrix.profile }} --app-config mbed_app_wo_bl.json
