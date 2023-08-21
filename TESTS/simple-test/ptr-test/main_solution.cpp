@@ -139,7 +139,7 @@ void test_raw_pointers() {
     // Sanity-check value of counter
     TEST_ASSERT_EQUAL(0, Test::_instanceCount);
 
-    // Create and destroy shared pointer in given scope
+    // allocate the raw pointer in a given scope
     {
         raw_ptr1 = new Test;
         TEST_ASSERT_EQUAL(1, Test::_instanceCount);
