@@ -9,6 +9,10 @@
     "config": {
         "main-stack-size": {
             "value": 8192
+        },
+        "usb_speed": {
+            "help": "USE_USB_OTG_FS or USE_USB_OTG_HS or USE_USB_HS_IN_FS",
+            "value": "USE_USB_OTG_FS"
         }
     },
     "target_overrides": {
@@ -49,7 +53,8 @@
             "mbed-trace.enable": true,
             "mbed-trace.max-level": "TRACE_LEVEL_DEBUG",
             "target.bootloader_img": "../mbed-os-bootloader/BUILD/DISCO_H747I/ARMC6/mbed-os-bootloader.bin",
-            "target.header_offset": "0x20000"
+            "target.header_offset": "0x20000",
+            "target.device_has_add": ["USBDEVICE"]
         }
     }
 }
