@@ -36,7 +36,7 @@ LCDDisplay::LCDDisplay() {}
 disco::ReturnCode LCDDisplay::init() {
     disco::ReturnCode rc = _bikeDisplay.init();
     if (rc != disco::ReturnCode::Ok) {
-        tr_error("Failed to initialize display: %d", rc);
+        tr_error("Failed to initialize display: %d", static_cast<int>(rc));
     }
     return rc;
 }

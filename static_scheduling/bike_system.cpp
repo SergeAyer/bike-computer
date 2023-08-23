@@ -31,7 +31,7 @@
 
 namespace static_scheduling {
 
-BikeSystem::BikeSystem() : _resetDevice(_timer), _speedometerDevice(_timer) {}
+BikeSystem::BikeSystem() : _speedometerDevice(_timer), _resetDevice(_timer) {}
 
 void BikeSystem::start() {
     tr_info("Starting Super-Loop with no event handling");
@@ -42,7 +42,7 @@ void BikeSystem::start() {
     // initialize the lcd display
     disco::ReturnCode rc = _lcdDisplay.init();
     if (rc != disco::ReturnCode::Ok) {
-        tr_error("Failed to initialized the lcd display: %d", rc);
+        tr_error("Failed to initialized the lcd display: %d", static_cast<int>(rc));
     }
 
     // initialize the sensor device
