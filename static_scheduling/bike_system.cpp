@@ -1,89 +1,187 @@
+// Copyright 2022 Haute école d'ingénierie et d'architecture de Fribourg
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+/****************************************************************************
+ * @file bike_system.cpp
+ * @author Serge Ayer <serge.ayer@hefr.ch>
+ *
+ * @brief Bike System implementation (static scheduling)
+ *
+ * @date 2023-08-20
+ * @version 1.0.0
+ ***************************************************************************/
+
 #include "static_scheduling/bike_system.hpp"
-#include "static_scheduling/task_logger.hpp"
 
 #include "mbed_trace.h"
 #if MBED_CONF_MBED_TRACE_ENABLE
 #define TRACE_GROUP "BikeSystem"
-#endif // MBED_CONF_MBED_TRACE_ENABLE
+#endif  // MBED_CONF_MBED_TRACE_ENABLE
 
 namespace static_scheduling {
 
-// for hidding the logging from the header file, declare a global variable for logging
-static TaskLogger gTaskLogger;
+BikeSystem::BikeSystem() : _resetDevice(_timer), _speedometerDevice(_timer) {}
 
-BikeSystem::BikeSystem() : _resetDevice(_timer)
-{
-}
-
-void BikeSystem::start()
-{
+void BikeSystem::start() {
     tr_info("Starting Super-Loop with no event handling");
 
     // start the timer
     _timer.start();
+
+    // initialize the lcd display
+    disco::ReturnCode rc = _lcdDisplay.init();
+    if (rc != disco::ReturnCode::Ok) {
+        tr_error("Failed to initialized the lcd display: %d", rc);
+    }
+
+    // initialize the sensor device
+    bool present = _sensorDevice.init();
+    if (!present) {
+        tr_error("Sensor not present or initialization failed");
+    }
+
+    // enable/disable task logging
+    _taskLogger.enable(false);
 
     while (true) {
         // register the time at the beginning of the cyclic schedule period
         std::chrono::microseconds startTime = _timer.elapsed_time();
 
         // perform tasks as documented in the timetable
-        updateCurrentGear();
-        updateWheelRotationCount();
-        updateDisplay(0);
+        uint8_t gear = readCurrentGear();
+        updateGearOnDisplay(gear);
+
+        // tell to the speedometer device that the gear may have changed
+        _speedometerDevice.setGear(gear);
+
+        float speed = readSpeed();
+        updateSpeedOnDisplay(speed);
+
+        float distance = readDistance();
+        updateDistanceOnDisplay(distance);
+
+        float temperature = readTemperature();
+        updateTemperatureOnDisplay(temperature);
+
         checkAndPerformReset();
-        updateWheelRotationCount();
-        updateDisplay(1);
-        updateCurrentGear();
-        updateWheelRotationCount();
-        updateDisplay(2);
-        checkAndPerformReset();
-        updateWheelRotationCount();
 
         ThisThread::sleep_for(std::chrono::milliseconds(100));
 
-        // register the time at the end of the cyclic schedule period and print the elapsed time for the period
+        // register the time at the end of the cyclic schedule period and print the
+        // elapsed time for the period
         std::chrono::microseconds endTime = _timer.elapsed_time();
-        tr_debug("Repeating cycle time is %d milliseconds", (int)(endTime.count() - startTime.count()) / 1000);
+        const auto cycle =
+            std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+        tr_debug("Repeating cycle time is %" PRIu64 " milliseconds", cycle.count());
     }
 }
 
-void BikeSystem::updateCurrentGear()
-{
+uint8_t BikeSystem::readCurrentGear() {
     std::chrono::microseconds taskStartTime = _timer.elapsed_time();
 
-    _gear = _gearSystemDevice.getCurrentGear();
+    uint8_t gear = _gearSystemDevice.getCurrentGear();
 
-    gTaskLogger.logPeriodAndExecutionTime(_timer, TaskLogger::kGearTaskIndex, taskStartTime);
+    _taskLogger.logPeriodAndExecutionTime(
+        _timer, utils::TaskLogger::kGearTaskIndex, taskStartTime);
+
+    return gear;
 }
 
-void BikeSystem::updateWheelRotationCount()
-{
+float BikeSystem::readSpeed() {
     std::chrono::microseconds taskStartTime = _timer.elapsed_time();
 
-    _wheelRotationCount = _wheelCounterDevice.getCurrentRotationCount();
+    float speed = _speedometerDevice.getCurrentSpeed();
 
-    gTaskLogger.logPeriodAndExecutionTime(_timer, TaskLogger::kCountTaskIndex, taskStartTime);
+    _taskLogger.logPeriodAndExecutionTime(
+        _timer, utils::TaskLogger::kCountTaskIndex, taskStartTime);
+
+    return speed;
 }
 
-void BikeSystem::updateDisplay(uint8_t subTaskIndex)
-{
+float BikeSystem::readDistance() {
     std::chrono::microseconds taskStartTime = _timer.elapsed_time();
 
-    _lcdDisplay.show(_gear, _wheelRotationCount, subTaskIndex);
+    float distance = _speedometerDevice.getDistance();
 
-    gTaskLogger.logPeriodAndExecutionTime(_timer, TaskLogger::kDisplayTaskIndex, taskStartTime);
+    _taskLogger.logPeriodAndExecutionTime(
+        _timer, utils::TaskLogger::kCountTaskIndex, taskStartTime);
+
+    return distance;
 }
 
-void BikeSystem::checkAndPerformReset()
-{
+float BikeSystem::readTemperature() {
+    std::chrono::microseconds taskStartTime = _timer.elapsed_time();
+
+    float temperature = _sensorDevice.readTemperature();
+
+    _taskLogger.logPeriodAndExecutionTime(
+        _timer, utils::TaskLogger::kSensorTaskIndex, taskStartTime);
+
+    return temperature;
+}
+
+void BikeSystem::updateGearOnDisplay(uint8_t gear) {
+    std::chrono::microseconds taskStartTime = _timer.elapsed_time();
+
+    _lcdDisplay.displayGear(gear);
+
+    std::chrono::microseconds taskEndTime   = _timer.elapsed_time();
+    std::chrono::microseconds executionTime = taskEndTime - taskStartTime;
+    tr_debug("Display %" PRIu64 " usecs", executionTime.count());
+
+    _taskLogger.logPeriodAndExecutionTime(
+        _timer, utils::TaskLogger::kDisplayTaskIndex, taskStartTime);
+}
+
+void BikeSystem::updateSpeedOnDisplay(float speed) {
+    std::chrono::microseconds taskStartTime = _timer.elapsed_time();
+
+    _lcdDisplay.displaySpeed(speed);
+
+    _taskLogger.logPeriodAndExecutionTime(
+        _timer, utils::TaskLogger::kDisplayTaskIndex, taskStartTime);
+}
+
+void BikeSystem::updateDistanceOnDisplay(float distance) {
+    std::chrono::microseconds taskStartTime = _timer.elapsed_time();
+
+    _lcdDisplay.displayDistance(distance);
+
+    _taskLogger.logPeriodAndExecutionTime(
+        _timer, utils::TaskLogger::kDisplayTaskIndex, taskStartTime);
+}
+
+void BikeSystem::updateTemperatureOnDisplay(float temperature) {
+    std::chrono::microseconds taskStartTime = _timer.elapsed_time();
+
+    _lcdDisplay.displayTemperature(temperature);
+
+    _taskLogger.logPeriodAndExecutionTime(
+        _timer, utils::TaskLogger::kDisplayTaskIndex, taskStartTime);
+}
+
+void BikeSystem::checkAndPerformReset() {
     std::chrono::microseconds taskStartTime = _timer.elapsed_time();
 
     if (_resetDevice.checkReset()) {
-        tr_info("Reset task: response time is %d usecs", (int)(_timer.elapsed_time().count() - _resetDevice.getFallTime().count()));
-        _wheelCounterDevice.reset();
+        tr_info("Reset task: response time is %" PRIu64 " usecs",
+                (_timer.elapsed_time() - _resetDevice.getFallTime()).count());
+        _speedometerDevice.reset();
     }
 
-    gTaskLogger.logPeriodAndExecutionTime(_timer, TaskLogger::kResetTaskIndex, taskStartTime);
+    _taskLogger.logPeriodAndExecutionTime(
+        _timer, utils::TaskLogger::kResetTaskIndex, taskStartTime);
 }
 
-} // namespace static_scheduling
+}  // namespace static_scheduling

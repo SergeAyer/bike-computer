@@ -2,6 +2,12 @@
 .mbed
 projectfiles
 *.py*
-mbed-os
 BUILD
 
+backup
+update-client
+mbed-os
+
+HTS221/X_NUCLEO_COMMON
+HTS221/ST_INTERFACES
+disco_h747i

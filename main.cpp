@@ -29,32 +29,19 @@
 #endif  //  MBED_CONF_MBED_TRACE_ENABLE
 
 #include "FlashIAPBlockDevice.h"
-#include "multi_tasking/bike_system.hpp"
-#include "multi_threading/bike_system.hpp"
+// #include "multi_tasking/bike_system.hpp"
+// #include "multi_threading/bike_system.hpp"
 #include "static_scheduling/bike_system.hpp"
-#include "static_scheduling_with_event/bike_system.hpp"
+// #include "static_scheduling_with_event/bike_system.hpp"
 #include "update-client/usb_serial_uc.hpp"
-
-#include "multi_tasking/gear_system_device.hpp"
 
 // main() runs in its own thread in the OS
 #if !MBED_TEST_MODE
 
-volatile uint32_t upCount = 0;
-volatile uint8_t gear = 0;
-
-void joystickCallback() {
-  core_util_atomic_incr_u32(&upCount, 1);
-}
-
-void gearCallback(uint8_t g) {
-  core_util_atomic_store_u8(&gear, g);
-}
-
 int main() {
-    //EventRecorderInitialize(EventRecordAll, 1);
-    // pb = static_cast<Base*>(&u);
-    // use trace library for console output
+    // EventRecorderInitialize(EventRecordAll, 1);
+    //  pb = static_cast<Base*>(&u);
+    //  use trace library for console output
     mbed_trace_init();
 
     tr_debug("Program started");
@@ -71,39 +58,28 @@ int main() {
     }
 #endif
 
-//disco::Joystick& joystick = disco::Joystick::getInstance();
-//joystick.setUpCallback(joystickCallback);
-/*multi_tasking::GearSystemDevice gearSystemDevice(gearCallback);
-
-while (true) {
-  //tr_debug("Joystick state is %d", joystick.getState());
-  tr_debug("Up event count is %d", upCount);
-  tr_debug("Gear is %d", gear);
-  ThisThread::sleep_for(1000ms);
-}*/
     // declare the BikeSystem instance
-    // static_scheduling::BikeSystem bikeSystem;
+    static_scheduling::BikeSystem bikeSystem;
     // static_scheduling_with_event::BikeSystem bikeSystem;
     // multi_threading::BikeSystem bikeSystem;
-    multi_tasking::BikeSystem bikeSystem;
+    // multi_tasking::BikeSystem bikeSystem;
 
     // will start the BikeSystem and never return
     tr_debug("Starting the bike system (2)");
     bikeSystem.start();
-    while (true) { 
+    while (true) {
     }
 }
 
 /**
-  * @brief  End of Refresh DSI callback.
-  * @param  hdsi: pointer to a DSI_HandleTypeDef structure that contains
-  *               the configuration information for the DSI.
-  * @retval None
-  */
-  
-void HAL_DSI_EndOfRefreshCallback(DSI_HandleTypeDef *hdsi)
-{
-  //tr_debug("Crash");
+ * @brief  End of Refresh DSI callback.
+ * @param  hdsi: pointer to a DSI_HandleTypeDef structure that contains
+ *               the configuration information for the DSI.
+ * @retval None
+ */
+
+void HAL_DSI_EndOfRefreshCallback(DSI_HandleTypeDef* hdsi) {
+    // tr_debug("Crash");
 }
 
 #endif  //! MBED_TEST_MODE

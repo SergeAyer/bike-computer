@@ -13,44 +13,43 @@
 // limitations under the License.
 
 /****************************************************************************
- * @file bike_system.cpp
+ * @file bike_system.hpp
  * @author Serge Ayer <serge.ayer@hefr.ch>
  *
- * @brief ResetDevice header file (static scheduling)
+ * @brief HDC1000 header file 
  *
  * @date 2023-08-20
  * @version 1.0.0
  ***************************************************************************/
-
+ 
 #pragma once
 
 #include "mbed.h"
 
-namespace static_scheduling {
+namespace sensors {
 
-class ResetDevice {
-   public:
-    // constructor
-    explicit ResetDevice(Timer& timer);  // NOLINT(runtime/references)
-
-    // method called for checking the reset status
-    bool checkReset();
-
-    // for computing the response time
-    const std::chrono::microseconds& getFallTime();
-
-   private:
-    // called when the button is pressed
-    void onFall();
-
-    // definition of task execution time
-    static constexpr std::chrono::microseconds kTaskRunTime = 100000us;
-
-    // data members
-    // instance representing the reset button
-    InterruptIn _resetButton;
-    Timer& _timer;
-    std::chrono::microseconds _fallTime;
+class HDC1000 : public I2C {
+public:
+  // constructor
+  HDC1000(PinName sda, PinName scl, PinName dataRdy);
+    
+  // method for checking device presence
+  bool probe(void);
+  
+  // method for getting the different measurements
+  double getTemperature(void);
+  double getHumidity(void);
+  
+private:
+  // private methods
+  uint16_t getRawTemperature(void);
+  uint16_t getRawHumidity(void);
+  mbed_error_status_t setReadRegister(uint8_t reg);
+  uint16_t read16(void);
+  
+  // data members
+  int _address;
+  DigitalIn _dataReadyPin; 
 };
 
-}  // namespace static_scheduling
+} // namespace sensors

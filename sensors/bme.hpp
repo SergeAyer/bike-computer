@@ -13,44 +13,53 @@
 // limitations under the License.
 
 /****************************************************************************
- * @file bike_system.cpp
+ * @file bike_system.hpp
  * @author Serge Ayer <serge.ayer@hefr.ch>
  *
- * @brief ResetDevice header file (static scheduling)
+ * @brief BME280 header file
  *
  * @date 2023-08-20
  * @version 1.0.0
  ***************************************************************************/
-
-#pragma once
+ 
+#ifndef BME_H
+#define BME_H
 
 #include "mbed.h"
 
-namespace static_scheduling {
+namespace sensors {
 
-class ResetDevice {
-   public:
-    // constructor
-    explicit ResetDevice(Timer& timer);  // NOLINT(runtime/references)
+#define _debug   0      // '1' to enable prinf BME's registers  
 
-    // method called for checking the reset status
-    bool checkReset();
+class BME
+{
+public:
 
-    // for computing the response time
-    const std::chrono::microseconds& getFallTime();
+    BME(PinName sda, PinName scl, char slave_adr);
 
-   private:
-    // called when the button is pressed
-    void onFall();
+    int         init(void);
+    int         chipID(void);
+    float       getTemperature(void);
+    float       getPressure(void);
+    float       getHumidity(void);
+  
+    uint16_t    chip_id;
 
-    // definition of task execution time
-    static constexpr std::chrono::microseconds kTaskRunTime = 100000us;
+private:
 
-    // data members
-    // instance representing the reset button
-    InterruptIn _resetButton;
-    Timer& _timer;
-    std::chrono::microseconds _fallTime;
+    I2C         bme;
+    void        initialize(void);
+    char        address;
+    uint16_t    dig_T1;
+    int16_t     dig_T2, dig_T3;
+    uint16_t    dig_P1;
+    int16_t     dig_P2, dig_P3, dig_P4, dig_P5, dig_P6, dig_P7, dig_P8, dig_P9;
+    uint16_t    dig_H1, dig_H3;
+    int16_t     dig_H2, dig_H4, dig_H5, dig_H6;
+    int32_t     t_fine;
+    bool        dbg_on;
 };
 
-}  // namespace static_scheduling
+#endif // BME_H
+
+} // namespace sensors

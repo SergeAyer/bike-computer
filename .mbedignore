@@ -23,10 +23,12 @@ disco_h747i/Fonts/font16.c
 disco_h747i/Fonts/font20.c
 disco_h747i/Fonts/font24.c
 
-static_scheduling/*
+_static_scheduling/*
 static_scheduling_with_event/*
-multi_threading/* 
+multi_threading/*
+multi_tasking/* 
 
 main_old.cpp
 backup/*
 demo/*
+

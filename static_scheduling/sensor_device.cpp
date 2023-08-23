@@ -16,41 +16,32 @@
  * @file bike_system.cpp
  * @author Serge Ayer <serge.ayer@hefr.ch>
  *
- * @brief ResetDevice header file (static scheduling)
+ * @brief SensorDevice implementation (static scheduling)
  *
  * @date 2023-08-20
  * @version 1.0.0
  ***************************************************************************/
 
-#pragma once
+#include "static_scheduling/sensor_device.hpp"
 
-#include "mbed.h"
+#include "mbed_trace.h"
+#if MBED_CONF_MBED_TRACE_ENABLE
+#define TRACE_GROUP "SensorDevice"
+#endif  // MBED_CONF_MBED_TRACE_ENABLE
 
 namespace static_scheduling {
 
-class ResetDevice {
-   public:
-    // constructor
-    explicit ResetDevice(Timer& timer);  // NOLINT(runtime/references)
+SensorDevice::SensorDevice() : _hdc1000(PD_13, PD_12, PC_6) {}
 
-    // method called for checking the reset status
-    bool checkReset();
+bool SensorDevice::init() {
+    // probe for testing the presence of the sensor
+    bool rc = _hdc1000.probe();
+    if (!rc) {
+        tr_error("HDC1000 not present");
+    }
+    return rc;
+}
 
-    // for computing the response time
-    const std::chrono::microseconds& getFallTime();
-
-   private:
-    // called when the button is pressed
-    void onFall();
-
-    // definition of task execution time
-    static constexpr std::chrono::microseconds kTaskRunTime = 100000us;
-
-    // data members
-    // instance representing the reset button
-    InterruptIn _resetButton;
-    Timer& _timer;
-    std::chrono::microseconds _fallTime;
-};
+float SensorDevice::readTemperature() { return _hdc1000.getTemperature(); }
 
 }  // namespace static_scheduling
