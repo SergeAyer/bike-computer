@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         target: [DISCO_H747I]
-        profile: [debug, release]
+        profile: [release]
             
 
     steps:
