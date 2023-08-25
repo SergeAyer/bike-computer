@@ -13,16 +13,16 @@
 // limitations under the License.
 
 /****************************************************************************
- * @file bike_system.cpp
+ * @file display_device.cpp
  * @author Serge Ayer <serge.ayer@hefr.ch>
  *
- * @brief LCD Display implementation (static scheduling)
+ * @brief Display device implementation (static scheduling)
  *
  * @date 2023-08-20
  * @version 1.0.0
  ***************************************************************************/
 
-#include "static_scheduling/lcd_display.hpp"
+#include "static_scheduling/display_device.hpp"
 
 #include "mbed_trace.h"
 #if MBED_CONF_MBED_TRACE_ENABLE
@@ -31,9 +31,9 @@
 
 namespace static_scheduling {
 
-LCDDisplay::LCDDisplay() {}
+DisplayDevice::DisplayDevice() {}
 
-disco::ReturnCode LCDDisplay::init() {
+disco::ReturnCode DisplayDevice::init() {
     disco::ReturnCode rc = _bikeDisplay.init();
     if (rc != disco::ReturnCode::Ok) {
         tr_error("Failed to initialize display: %d", static_cast<int>(rc));
@@ -41,25 +41,25 @@ disco::ReturnCode LCDDisplay::init() {
     return rc;
 }
 
-void LCDDisplay::displayGear(uint8_t currentGear) {
+void DisplayDevice::displayGear(uint8_t currentGear) {
     _bikeDisplay.displayGear(currentGear);
     // simulate task computation by waiting for the required task run time
     wait_us(kSubTaskRunTime.count());
 }
 
-void LCDDisplay::displaySpeed(float speed) {
+void DisplayDevice::displaySpeed(float speed) {
     _bikeDisplay.displaySpeed(speed);
     // simulate task computation by waiting for the required task run time
     wait_us(kSubTaskRunTime.count());
 }
 
-void LCDDisplay::displayDistance(float distance) {
+void DisplayDevice::displayDistance(float distance) {
     _bikeDisplay.displayDistance(distance);
     // simulate task computation by waiting for the required task run time
     wait_us(kSubTaskRunTime.count());
 }
 
-void LCDDisplay::displayTemperature(float temperature) {
+void DisplayDevice::displayTemperature(float temperature) {
     _bikeDisplay.displayTemperature(temperature);
     // simulate task computation by waiting for the required task run time
     wait_us(kSubTaskRunTime.count());

@@ -31,6 +31,13 @@
 
 namespace utils {
 
+const char* TaskLogger::kTaskDescriptors[TaskLogger::kNbrOfTasks] = {
+    const_cast<char*>("Reset"),
+    const_cast<char*>("Gear"),
+    const_cast<char*>("Count"),
+    const_cast<char*>("Display"),
+    const_cast<char*>("Sensor")};
+
 void TaskLogger::enable(bool enable) { _isEnabled = enable; }
 
 void TaskLogger::logPeriodAndExecutionTime(

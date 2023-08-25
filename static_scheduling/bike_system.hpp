@@ -24,8 +24,8 @@
 
 #pragma once
 
+#include "display_device.hpp"
 #include "gear_system_device.hpp"
-#include "lcd_display.hpp"
 #include "reset_device.hpp"
 #include "sensor_device.hpp"
 #include "speedometer_device.hpp"
@@ -64,7 +64,7 @@ class BikeSystem {
     // data member that represents the device used for resetting
     ResetDevice _resetDevice;
     // data member that represents the device display
-    LCDDisplay _lcdDisplay;
+    DisplayDevice _displayDevice;
     // data member that represents the sensor device
     SensorDevice _sensorDevice;
 

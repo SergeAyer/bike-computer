@@ -43,12 +43,8 @@ class TaskLogger {
 
    private:
     // constants
-    static constexpr int kNbrOfTasks          = 5;
-    static constexpr char* kTaskDescriptors[] = {const_cast<char*>("Reset"),
-                                                 const_cast<char*>("Gear"),
-                                                 const_cast<char*>("Count"),
-                                                 const_cast<char*>("Display"),
-                                                 const_cast<char*>("Sensor")};
+    static constexpr int kNbrOfTasks = 5;
+    static const char* kTaskDescriptors[TaskLogger::kNbrOfTasks];
 
     // data members
     bool _isEnabled = true;

@@ -13,10 +13,10 @@
 // limitations under the License.
 
 /****************************************************************************
- * @file bike_system.cpp
+ * @file display_device.cpp
  * @author Serge Ayer <serge.ayer@hefr.ch>
  *
- * @brief LCD Display header file (static scheduling)
+ * @brief Display device header file (static scheduling)
  *
  * @date 2023-08-20
  * @version 1.0.0
@@ -29,9 +29,9 @@
 
 namespace static_scheduling {
 
-class LCDDisplay {
+class DisplayDevice {
    public:
-    LCDDisplay();
+    DisplayDevice();
 
     // to be called for initializing the LCD display
     disco::ReturnCode init();

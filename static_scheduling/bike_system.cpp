@@ -40,7 +40,7 @@ void BikeSystem::start() {
     _timer.start();
 
     // initialize the lcd display
-    disco::ReturnCode rc = _lcdDisplay.init();
+    disco::ReturnCode rc = _displayDevice.init();
     if (rc != disco::ReturnCode::Ok) {
         tr_error("Failed to initialized the lcd display: %d", static_cast<int>(rc));
     }
@@ -134,7 +134,7 @@ float BikeSystem::readTemperature() {
 void BikeSystem::updateGearOnDisplay(uint8_t gear) {
     std::chrono::microseconds taskStartTime = _timer.elapsed_time();
 
-    _lcdDisplay.displayGear(gear);
+    _displayDevice.displayGear(gear);
 
     std::chrono::microseconds taskEndTime   = _timer.elapsed_time();
     std::chrono::microseconds executionTime = taskEndTime - taskStartTime;
@@ -147,7 +147,7 @@ void BikeSystem::updateGearOnDisplay(uint8_t gear) {
 void BikeSystem::updateSpeedOnDisplay(float speed) {
     std::chrono::microseconds taskStartTime = _timer.elapsed_time();
 
-    _lcdDisplay.displaySpeed(speed);
+    _displayDevice.displaySpeed(speed);
 
     _taskLogger.logPeriodAndExecutionTime(
         _timer, utils::TaskLogger::kDisplayTaskIndex, taskStartTime);
@@ -156,7 +156,7 @@ void BikeSystem::updateSpeedOnDisplay(float speed) {
 void BikeSystem::updateDistanceOnDisplay(float distance) {
     std::chrono::microseconds taskStartTime = _timer.elapsed_time();
 
-    _lcdDisplay.displayDistance(distance);
+    _displayDevice.displayDistance(distance);
 
     _taskLogger.logPeriodAndExecutionTime(
         _timer, utils::TaskLogger::kDisplayTaskIndex, taskStartTime);
@@ -165,7 +165,7 @@ void BikeSystem::updateDistanceOnDisplay(float distance) {
 void BikeSystem::updateTemperatureOnDisplay(float temperature) {
     std::chrono::microseconds taskStartTime = _timer.elapsed_time();
 
-    _lcdDisplay.displayTemperature(temperature);
+    _displayDevice.displayTemperature(temperature);
 
     _taskLogger.logPeriodAndExecutionTime(
         _timer, utils::TaskLogger::kDisplayTaskIndex, taskStartTime);

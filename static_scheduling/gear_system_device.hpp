@@ -13,7 +13,7 @@
 // limitations under the License.
 
 /****************************************************************************
- * @file bike_system.cpp
+ * @file gear_system_device.hpp
  * @author Serge Ayer <serge.ayer@hefr.ch>
  *
  * @brief Gear System header file (static scheduling)
@@ -42,10 +42,6 @@ class GearSystemDevice {
     static constexpr uint8_t kMaxGear = 9;
 
    private:
-    // reading rate in milliseconds when running a separate thread
-    // The gear value is updated every second
-    static constexpr std::chrono::milliseconds kReadingRate = 1000ms;
-
     // definition of task execution time
     static constexpr std::chrono::microseconds kTaskRunTime = 100000us;
 

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 /****************************************************************************
- * @file bike_system.cpp
+ * @file speedometer_device.hpp
  * @author Serge Ayer <serge.ayer@hefr.ch>
  *
  * @brief WheelCounterDevice header file (static scheduling)
@@ -51,20 +51,13 @@ class SpeedometerDevice {
     static constexpr std::chrono::milliseconds kTaskPeriod = 400ms;
     // definition of task execution time
     static constexpr std::chrono::microseconds kTaskRunTime = 200000us;
-    // definition of pedal rotation initial time (corresponds to 80 turn / min)
-    static constexpr std::chrono::milliseconds kInitialPedalRotationTime = 750ms;
-    // definition of pedal rotation minimal time (corresponds to 160 turn / min)
-    static constexpr std::chrono::milliseconds kMinPedalRotationTime = 375ms;
-    // definition of pedal rotation minimal time (corresponds to 10 turn / min)
-    static constexpr std::chrono::milliseconds kMaxPedalRotationTime = 6000ms;
-    // definition of pedal rotation time change upon acc/dec
-    static constexpr std::chrono::milliseconds kDeltaRotationTime = 25ms;
+
     // constants related to speed computation
     static constexpr uint32_t kInitialRotationCount = 10;
     static constexpr float kWheelCircumference      = 2.1f;
     static constexpr uint8_t kTraySize              = 50;
     std::chrono::microseconds _lastTime             = std::chrono::microseconds::zero();
-    std::chrono::milliseconds _pedalRotationTime    = kInitialPedalRotationTime;
+    std::chrono::milliseconds _pedalRotationTime    = std::chrono::milliseconds::zero();
 
     // data members
     Timer& _timer;

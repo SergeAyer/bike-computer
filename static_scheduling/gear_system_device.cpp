@@ -13,7 +13,7 @@
 // limitations under the License.
 
 /****************************************************************************
- * @file bike_system.cpp
+ * @file gear_system_device.cpp
  * @author Serge Ayer <serge.ayer@hefr.ch>
  *
  * @brief Gear System implementation (static scheduling)
@@ -33,6 +33,10 @@
 #endif  // MBED_CONF_MBED_TRACE_ENABLE
 
 namespace static_scheduling {
+
+// reading rate in milliseconds when running a separate thread
+// The gear value is updated every second
+static constexpr std::chrono::milliseconds kReadingRate = 1000ms;
 
 GearSystemDevice::GearSystemDevice() {
     _thread.start(callback(this, &GearSystemDevice::read));

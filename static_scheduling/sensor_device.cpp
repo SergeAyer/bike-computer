@@ -13,7 +13,7 @@
 // limitations under the License.
 
 /****************************************************************************
- * @file bike_system.cpp
+ * @file sensor_device.cpp
  * @author Serge Ayer <serge.ayer@hefr.ch>
  *
  * @brief SensorDevice implementation (static scheduling)
