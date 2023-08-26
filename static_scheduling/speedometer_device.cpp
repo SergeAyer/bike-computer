@@ -36,14 +36,11 @@
 
 namespace static_scheduling {
 
-// definition of pedal rotation initial time (corresponds to 80 turn / min)
-static constexpr std::chrono::milliseconds kInitialPedalRotationTime = 750ms;
-// definition of pedal rotation minimal time (corresponds to 160 turn / min)
-static constexpr std::chrono::milliseconds kMinPedalRotationTime = 375ms;
-// definition of pedal rotation minimal time (corresponds to 10 turn / min)
-static constexpr std::chrono::milliseconds kMaxPedalRotationTime = 6000ms;
-// definition of pedal rotation time change upon acc/dec
-static constexpr std::chrono::milliseconds kDeltaRotationTime = 25ms;
+// constant definitions
+const std::chrono::milliseconds SpeedometerDevice::kInitialPedalRotationTime = 750ms;
+const std::chrono::milliseconds SpeedometerDevice::kMinPedalRotationTime     = 375ms;
+const std::chrono::milliseconds SpeedometerDevice::kMaxPedalRotationTime     = 1500ms;
+const std::chrono::milliseconds SpeedometerDevice::kDeltaRotationTime        = 25ms;
 
 SpeedometerDevice::SpeedometerDevice(Timer& timer)
     : _pedalRotationTime(kInitialPedalRotationTime), _timer(timer) {
@@ -51,6 +48,16 @@ SpeedometerDevice::SpeedometerDevice(Timer& timer)
 }
 
 void SpeedometerDevice::setGear(uint8_t gear) { _gear = gear; }
+
+uint8_t SpeedometerDevice::getGearSize() { return kMaxGearSize - _gear; }
+
+float SpeedometerDevice::getWheelCircumference() { return kWheelCircumference; }
+
+float SpeedometerDevice::getTraySize() { return kTraySize; }
+
+std::chrono::milliseconds SpeedometerDevice::getCurrentPedalRotationTime() {
+    return _pedalRotationTime;
+}
 
 float SpeedometerDevice::getCurrentSpeed() {
     // simulate task computation by waiting for the required task run time
@@ -64,43 +71,46 @@ float SpeedometerDevice::getDistance() {
     return _totalDistance;
 }
 
-void SpeedometerDevice::reset() { core_util_atomic_store_u32(&_rotationCount, 0); }
+void SpeedometerDevice::reset() {}
 
 void SpeedometerDevice::update() {
     // start with an initial rotation count for proper initialization
-    _rotationCount = kInitialRotationCount;
-    _lastTime      = _timer.elapsed_time();
+    _lastTime = _timer.elapsed_time();
     ThisThread::sleep_for(_pedalRotationTime * kInitialRotationCount);
 
     while (true) {
-        // increment rotation count
-        // the call for incrementing the count should be atomic
-        _rotationCount++;
-
-        // we compute the instantaneous speed at each pedal rotation
+        // compute speed and distance since last call
         computeSpeedAndDistance();
 
         // check whether speed has been updated
         disco::Joystick::State joystickState = disco::Joystick::getInstance().getState();
         switch (joystickState) {
             case disco::Joystick::State::RightPressed:
-                if (_pedalRotationTime > kMinPedalRotationTime) {
-                    _pedalRotationTime -= kDeltaRotationTime;
-                    tr_debug("Updated rotation time to %lld", _pedalRotationTime.count());
-                }
+                increaseRotationSpeed();
                 break;
 
             case disco::Joystick::State::LeftPressed:
-                if (_pedalRotationTime < kMaxPedalRotationTime) {
-                    _pedalRotationTime += kDeltaRotationTime;
-                }
+                decreaseRotationSpeed();
                 break;
 
             default:
                 break;
         }
+
         // by sleeping for the rotation time, we simulate turns
         ThisThread::sleep_for(_pedalRotationTime);
+    }
+}
+
+void SpeedometerDevice::increaseRotationSpeed() {
+    if (_pedalRotationTime > kMinPedalRotationTime) {
+        _pedalRotationTime -= kDeltaRotationTime;
+    }
+}
+
+void SpeedometerDevice::decreaseRotationSpeed() {
+    if (_pedalRotationTime < kMaxPedalRotationTime) {
+        _pedalRotationTime += kDeltaRotationTime;
     }
 }
 
@@ -111,17 +121,37 @@ void SpeedometerDevice::computeSpeedAndDistance() {
     // Distance run with one pedal turn (wheel circumference = 2.10 m) = 50/15 * 2.1 m
     // = 6.99m If you ride at 80 pedal turns / min, you run a distance of 6.99 * 80 / min
     // ~= 560 m / min = 33.6 km/h
+
+    // compute the elapsed time since last call
     std::chrono::microseconds time = _timer.elapsed_time();
-    const auto elapsedMS =
+    const auto elapsedTime =
         std::chrono::duration_cast<std::chrono::milliseconds>(time - _lastTime);
+    // compute the number of pedal rotations since last call
+    float pedalRotations = static_cast<float>(elapsedTime.count()) /
+                           static_cast<float>(_pedalRotationTime.count());
+
+    // compute the distance per pedal rotation
     uint8_t gearSize = kMaxGearSize - _gear;
     // distance run in the elapsed time (in m)
-    float distance = (static_cast<float>(kTraySize) / static_cast<float>(gearSize)) *
-                     kWheelCircumference;
+    float distancePerPedalRotation =
+        (static_cast<float>(kTraySize) / static_cast<float>(gearSize)) *
+        kWheelCircumference;
+
+    // update the total distance
+    float distance = (distancePerPedalRotation * pedalRotations);
     _totalDistance += distance;
+
+    // update the current speed
     // speed (m / ms) is converted to (km / h) by multiplying by 3'600'000 / 1000 = 3'600
-    _currentSpeed = (distance * 3600.0f) / elapsedMS.count();
-    _lastTime     = _timer.elapsed_time();
+    _currentSpeed = (distance * 3600.0f) / elapsedTime.count();
+    tr_debug("Pedal rotations %f, distance %f, speed %f, elapsed time %" PRIu64 "",
+             pedalRotations,
+             distance,
+             _currentSpeed,
+             elapsedTime.count());
+
+    // update _lastTime
+    _lastTime = _timer.elapsed_time();
 }
 
 }  // namespace static_scheduling

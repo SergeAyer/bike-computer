@@ -13,39 +13,37 @@
 // limitations under the License.
 
 /****************************************************************************
- * @file sensor_device.hpp
+ * @file sensor_device.cpp
  * @author Serge Ayer <serge.ayer@hefr.ch>
  *
- * @brief SensorDevice header file (static scheduling)
+ * @brief SensorDevice implementation (static scheduling)
  *
  * @date 2023-08-20
  * @version 1.0.0
  ***************************************************************************/
 
-#pragma once
+#include "sensor_device.hpp"
 
-#include "mbed.h"
-#include "sensors/hdc1000.hpp"
+#include "mbed_trace.h"
+#if MBED_CONF_MBED_TRACE_ENABLE
+#define TRACE_GROUP "SensorDevice"
+#endif  // MBED_CONF_MBED_TRACE_ENABLE
 
-namespace static_scheduling {
+namespace common {
 
-class SensorDevice {
-   public:
-    // constructor
-    SensorDevice();
+SensorDevice::SensorDevice() : _hdc1000(PD_13, PD_12, PC_6) {}
 
-    // method for initializing the device
-    bool init();
+bool SensorDevice::init() {
+    // probe for testing the presence of the sensor
+    bool rc = _hdc1000.probe();
+    if (!rc) {
+        tr_error("HDC1000 not present");
+    }
+    return rc;
+}
 
-    // methods used for
-    float readTemperature();
+float SensorDevice::readTemperature() { return _hdc1000.getTemperature(); }
 
-   private:
-    // definition of task execution time
-    static constexpr std::chrono::microseconds kTaskRunTime = 100000us;
+float SensorDevice::readHumidity() { return _hdc1000.getHumidity(); }
 
-    // data members
-    sensors::HDC1000 _hdc1000;
-};
-
-}  // namespace static_scheduling
+}  // namespace common

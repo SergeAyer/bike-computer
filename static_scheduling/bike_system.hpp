@@ -24,10 +24,10 @@
 
 #pragma once
 
+#include "common/sensor_device.hpp"
 #include "display_device.hpp"
 #include "gear_system_device.hpp"
 #include "reset_device.hpp"
-#include "sensor_device.hpp"
 #include "speedometer_device.hpp"
 #include "utils/task_logger.hpp"
 
@@ -66,7 +66,7 @@ class BikeSystem {
     // data member that represents the device display
     DisplayDevice _displayDevice;
     // data member that represents the sensor device
-    SensorDevice _sensorDevice;
+    common::SensorDevice _sensorDevice;
 
     // used for logging task info
     utils::TaskLogger _taskLogger;
