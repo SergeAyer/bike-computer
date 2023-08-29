@@ -24,55 +24,43 @@
 
 #pragma once
 
-#include <chrono>
-
+#include "constants.hpp"
 #include "mbed.h"
 
-namespace static_scheduling {
+namespace bike_system {
 
-class SpeedometerDevice {
+class Speedometer {
    public:
     // Number of rotation count to wait before the device can deliver a speed
     static constexpr uint32_t kInitialRotationCount = 10;
-    // When compiling and linking with gcc, we get a link error when using static
-    // constexpr. The error is related to template instantiation. definition of pedal
-    // rotation initial time (corresponds to 80 turn / min)
-    static const std::chrono::milliseconds kInitialPedalRotationTime;
-    // definition of pedal minimal rotation time (corresponds to 160 turn / min)
-    static const std::chrono::milliseconds kMinPedalRotationTime;
-    // definition of pedal maximal rotation time (corresponds to 10 turn / min)
-    static const std::chrono::milliseconds kMaxPedalRotationTime;
-    // definition of pedal rotation time change upon acceleration/deceleration
-    static const std::chrono::milliseconds kDeltaRotationTime;
 
-    explicit SpeedometerDevice(Timer& timer);  // NOLINT(runtime/references)
+    explicit Speedometer(Timer& timer);  // NOLINT(runtime/references)
 
     // methods used for setting/getting the current gear
-    void setGear(uint8_t gear);
+    void setGearSize(uint8_t gearSize);
+    uint8_t getGearSize();
 
     // method called for getting the wheel circumference
-    uint8_t getGearSize();
     float getWheelCircumference();
+    // method called for getting the tray size
     float getTraySize();
 
-    // method called for getting the current pedal rotation time
+    // method called for setting/getting the current pedal rotation time
+    void setCurrentRotationTime(const std::chrono::milliseconds& currentRotationTime);
     std::chrono::milliseconds getCurrentPedalRotationTime();
-    // method called for getting the current speed
+
+    // method called for getting the current speed (expressed in km / h)
     float getCurrentSpeed();
-    // method called for getting the current distance
+    // method called for getting the current distance (expressed in km)
     float getDistance();
 
-    // these methods are made public for testing purposes
-    void increaseRotationSpeed();
-    void decreaseRotationSpeed();
-
-    // method called for resetting the counter
+    // method called for resetting the traveled distance
     void reset();
 
    private:
     // private methods
-    void update();
-    void computeSpeedAndDistance();
+    void computeSpeed();
+    void computeDistance();
 
     // definition of task period time
     static constexpr std::chrono::milliseconds kTaskPeriod = 400ms;
@@ -83,19 +71,17 @@ class SpeedometerDevice {
     static constexpr float kWheelCircumference   = 2.1f;
     static constexpr uint8_t kTraySize           = 50;
     std::chrono::microseconds _lastTime          = std::chrono::microseconds::zero();
-    std::chrono::milliseconds _pedalRotationTime = std::chrono::milliseconds::zero();
+    std::chrono::milliseconds _pedalRotationTime = bike_system::kInitialPedalRotationTime;
 
     // data members
     Timer& _timer;
     LowPowerTicker _ticker;
-    float _currentSpeed  = 0.0f;
+    float _currentSpeed = 0.0f;
+    Mutex _totalDistanceMutex;
     float _totalDistance = 0.0f;
-    // smallest gear corresponds to a gear size of 20
-    // when the gear increases, the gear size descreases
-    uint8_t _gear                         = 1;
-    static constexpr uint8_t kMaxGearSize = 16;
+    uint8_t _gearSize    = 1;
 
     Thread _thread;
 };
 
-}  // namespace static_scheduling
+}  // namespace bike_system

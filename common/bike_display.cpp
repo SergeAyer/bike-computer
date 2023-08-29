@@ -38,7 +38,7 @@
 #define TRACE_GROUP "BikeDisplay"
 #endif  // MBED_CONF_MBED_TRACE_ENABLE
 
-namespace common {
+namespace bike_system {
 
 // create the LCDDisplay instance as a global variable (not on stack)
 static disco::LCDDisplay lcdDisplay;
@@ -302,4 +302,4 @@ void BikeDisplay::displayWelcome() {
 }
 #endif
 
-}  // namespace common
+}  // namespace bike_system

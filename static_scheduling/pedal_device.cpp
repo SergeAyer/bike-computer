@@ -13,49 +13,43 @@
 // limitations under the License.
 
 /****************************************************************************
- * @file gear_system_device.cpp
+ * @file pedal_device.cpp
  * @author Serge Ayer <serge.ayer@hefr.ch>
  *
- * @brief Gear System implementation (static scheduling)
+ * @brief Pedal Device implementation (static scheduling)
  *
  * @date 2023-08-20
  * @version 1.0.0
  ***************************************************************************/
 
-#include "static_scheduling/gear_system_device.hpp"
+#include "static_scheduling/pedal_device.hpp"
 
 // from disco_h747i/wrappers
 #include "joystick.hpp"
 #include "mbed_trace.h"
 
 #if MBED_CONF_MBED_TRACE_ENABLE
-#define TRACE_GROUP "GearSystemDevice"
+#define TRACE_GROUP "PedalDevice"
 #endif  // MBED_CONF_MBED_TRACE_ENABLE
 
 namespace static_scheduling {
 
 // reading rate in milliseconds when running a separate thread
-// The gear value is updated every second
 static constexpr std::chrono::milliseconds kReadingRate = 1000ms;
 
-GearSystemDevice::GearSystemDevice() {
-    _thread.start(callback(this, &GearSystemDevice::read));
-}
+PedalDevice::PedalDevice() { _thread.start(callback(this, &PedalDevice::read)); }
 
-void GearSystemDevice::read() {
+void PedalDevice::read() {
     while (true) {
+        // check whether rotation speed has been updated
         disco::Joystick::State joystickState = disco::Joystick::getInstance().getState();
         switch (joystickState) {
-            case disco::Joystick::State::UpPressed:
-                if (_currentGear < kMaxGear) {
-                    _currentGear++;
-                }
+            case disco::Joystick::State::RightPressed:
+                increaseRotationSpeed();
                 break;
 
-            case disco::Joystick::State::DownPressed:
-                if (_currentGear > kMinGear) {
-                    _currentGear--;
-                }
+            case disco::Joystick::State::LeftPressed:
+                decreaseRotationSpeed();
                 break;
 
             default:
@@ -65,10 +59,22 @@ void GearSystemDevice::read() {
     }
 }
 
-int GearSystemDevice::getCurrentGear() {
+std::chrono::milliseconds PedalDevice::getCurrentRotationTime() {
     // simulate task computation by waiting for the required task run time
-    wait_us(kTaskRunTime.count());
-    return _currentGear;
+    // wait_us(kTaskRunTime.count());
+    return _pedalRotationTime;
+}
+
+void PedalDevice::increaseRotationSpeed() {
+    if (_pedalRotationTime > bike_system::kMinPedalRotationTime) {
+        _pedalRotationTime -= bike_system::kDeltaPedalRotationTime;
+    }
+}
+
+void PedalDevice::decreaseRotationSpeed() {
+    if (_pedalRotationTime < bike_system::kMaxPedalRotationTime) {
+        _pedalRotationTime += bike_system::kDeltaPedalRotationTime;
+    }
 }
 
 }  // namespace static_scheduling

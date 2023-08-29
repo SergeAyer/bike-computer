@@ -28,7 +28,7 @@
 #include "mbed.h"
 #include "multi_tasking/data_types.hpp"
 
-namespace common {
+namespace bike_system {
 
 class BikeDisplay {
    public:
@@ -114,4 +114,4 @@ class BikeDisplay {
 #endif
 };
 
-}  // namespace common
+}  // namespace bike_system

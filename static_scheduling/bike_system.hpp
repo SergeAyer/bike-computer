@@ -25,10 +25,11 @@
 #pragma once
 
 #include "common/sensor_device.hpp"
+#include "common/speedometer.hpp"
 #include "display_device.hpp"
-#include "gear_system_device.hpp"
+#include "gear_device.hpp"
+#include "pedal_device.hpp"
 #include "reset_device.hpp"
-#include "speedometer_device.hpp"
 #include "utils/task_logger.hpp"
 
 namespace static_scheduling {
@@ -45,6 +46,8 @@ class BikeSystem {
     // private methods
     // called from the start() method super-loop for executing each task
     uint8_t readCurrentGear();
+    uint8_t readCurrentGearSize();
+    std::chrono::milliseconds readCurrentPedalRotationTime();
     float readSpeed();
     float readDistance();
     float readTemperature();
@@ -58,15 +61,18 @@ class BikeSystem {
     // timer instance used for loggint task time and used by ResetDevice
     Timer _timer;
     // data member that represents the device for manipulating the gear
-    GearSystemDevice _gearSystemDevice;
-    // data member that represents the device for counting wheel rotations
-    SpeedometerDevice _speedometerDevice;
+    GearDevice _gearDevice;
+    // data member that represents the device for manipulating the pedal rotation
+    // speed/time
+    PedalDevice _pedalDevice;
     // data member that represents the device used for resetting
     ResetDevice _resetDevice;
     // data member that represents the device display
     DisplayDevice _displayDevice;
+    // data member that represents the device for counting wheel rotations
+    bike_system::Speedometer _speedometer;
     // data member that represents the sensor device
-    common::SensorDevice _sensorDevice;
+    bike_system::SensorDevice _sensorDevice;
 
     // used for logging task info
     utils::TaskLogger _taskLogger;

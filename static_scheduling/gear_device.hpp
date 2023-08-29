@@ -13,10 +13,10 @@
 // limitations under the License.
 
 /****************************************************************************
- * @file gear_system_device.hpp
+ * @file gear_device.hpp
  * @author Serge Ayer <serge.ayer@hefr.ch>
  *
- * @brief Gear System header file (static scheduling)
+ * @brief Gear Device header file (static scheduling)
  *
  * @date 2023-08-20
  * @version 1.0.0
@@ -24,22 +24,19 @@
 
 #pragma once
 
-#include "USBSerial.h"
+#include "common/constants.hpp"
 #include "mbed.h"
 
 namespace static_scheduling {
 
-class GearSystemDevice {
+class GearDevice {
    public:
     // constructor used for simulating the device with a thread
-    GearSystemDevice();
+    GearDevice();
 
     // method called for updating the bike system
-    int getCurrentGear();
-
-    // constants
-    static constexpr uint8_t kMinGear = 1;
-    static constexpr uint8_t kMaxGear = 9;
+    uint8_t getCurrentGear();
+    uint8_t getCurrentGearSize();
 
    private:
     // definition of task execution time
@@ -49,7 +46,7 @@ class GearSystemDevice {
     void read();
 
     // data members
-    uint8_t _currentGear = kMinGear;
+    uint8_t _currentGear = bike_system::kMinGear;
     Thread _thread;
 };
 

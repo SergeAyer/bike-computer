@@ -42,7 +42,7 @@ const std::chrono::microseconds& ResetDevice::getFallTime() { return _fallTime; 
 
 bool ResetDevice::checkReset() {
     // simulate task computation by waiting for the required task run time
-    wait_us(kTaskRunTime.count());
+    // wait_us(kTaskRunTime.count());
 
     return _resetButton.read() == POLARITY_PRESSED;
 }

@@ -13,10 +13,10 @@
 // limitations under the License.
 
 /****************************************************************************
- * @file sensor_device.hpp
+ * @file pedal_device.hpp
  * @author Serge Ayer <serge.ayer@hefr.ch>
  *
- * @brief SensorDevice header file (static scheduling)
+ * @brief Pedal System header file (static scheduling)
  *
  * @date 2023-08-20
  * @version 1.0.0
@@ -24,29 +24,33 @@
 
 #pragma once
 
+#include "constants.hpp"
 #include "mbed.h"
-#include "sensors/hdc1000.hpp"
 
-namespace bike_system {
+namespace static_scheduling {
 
-class SensorDevice {
+class PedalDevice {
    public:
-    // constructor
-    SensorDevice();
+    // constructor used for simulating the device with a thread
+    PedalDevice();
 
-    // method for initializing the device
-    bool init();
-
-    // methods used for
-    float readTemperature();
-    float readHumidity();
+    // method called for updating the bike system
+    std::chrono::milliseconds getCurrentRotationTime();
 
    private:
+    // private methods
+    void increaseRotationSpeed();
+    void decreaseRotationSpeed();
+
     // definition of task execution time
     static constexpr std::chrono::microseconds kTaskRunTime = 100000us;
 
+    // methods
+    void read();
+
     // data members
-    sensors::HDC1000 _hdc1000;
+    std::chrono::milliseconds _pedalRotationTime = bike_system::kInitialPedalRotationTime;
+    Thread _thread;
 };
 
-}  // namespace bike_system
+}  // namespace static_scheduling

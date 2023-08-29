@@ -24,22 +24,27 @@
 
 #include <chrono>
 
+#include "common/constants.hpp"
+#include "common/speedometer.hpp"
 #include "greentea-client/test_env.h"
 #include "mbed.h"
-#include "static_scheduling/gear_system_device.hpp"
-#include "static_scheduling/speedometer_device.hpp"
+#include "static_scheduling/gear_device.hpp"
 #include "unity/unity.h"
 #include "utest/utest.h"
 
 using namespace utest::v1;
 
-// function called by test handler functions for verifying the current speed
+// allow for 0.1 km/h difference
+static constexpr float kAllowedSpeedDelta = 0.1f;
+// allow for 1m difference
+static constexpr float kAllowedDistanceDelta = 1.0f / 1000.0;
 
-void test_current_speed(const std::chrono::milliseconds& pedalRotationTime,
-                        uint8_t traySize,
-                        uint8_t gearSize,
-                        float wheelCircumference,
-                        float currentSpeed) {
+// function called by test handler functions for verifying the current speed
+void check_current_speed(const std::chrono::milliseconds& pedalRotationTime,
+                         uint8_t traySize,
+                         uint8_t gearSize,
+                         float wheelCircumference,
+                         float currentSpeed) {
     // compute the number of pedal rotation per hour
     uint32_t milliSecondsPerHour = 1000 * 3600;
     float pedalRotationsPerHour  = static_cast<float>(milliSecondsPerHour) /
@@ -52,47 +57,71 @@ void test_current_speed(const std::chrono::milliseconds& pedalRotationTime,
     float expectedSpeed        = (distancePerPedalTurn / 1000.0f) * pedalRotationsPerHour;
 
     printf("  Expected speed is %f, current speed is %f\n", expectedSpeed, currentSpeed);
-    static constexpr float kAllowedDelta = 0.1f;
-    TEST_ASSERT_FLOAT_WITHIN(kAllowedDelta, expectedSpeed, currentSpeed);
+    TEST_ASSERT_FLOAT_WITHIN(kAllowedSpeedDelta, expectedSpeed, currentSpeed);
+}
+
+// compute the traveled distance for a time interval
+float compute_distance(const std::chrono::milliseconds& pedalRotationTime,
+                       uint8_t traySize,
+                       uint8_t gearSize,
+                       float wheelCircumference,
+                       const std::chrono::milliseconds& travelTime) {
+    // compute the number of pedal rotation during travel time
+    // both times are expressed in ms
+    float pedalRotations = static_cast<float>(travelTime.count()) /
+                           static_cast<float>(pedalRotationTime.count());
+
+    // compute the distance in meter for each pedal turn
+    float trayGearRatio = static_cast<float>(traySize) / static_cast<float>(gearSize);
+    float distancePerPedalTurn = trayGearRatio * wheelCircumference;
+
+    // distancePerPedalTurn is expressed in m, divide per 1000 for a distance in km
+    return (distancePerPedalTurn * pedalRotations) / 1000.0;
+}
+
+// function called by test handler functions for verifying the distance traveled
+void check_distance(const std::chrono::milliseconds& pedalRotationTime,
+                    uint8_t traySize,
+                    uint8_t gearSize,
+                    float wheelCircumference,
+                    const std::chrono::milliseconds& travelTime,
+                    float distance) {
+    // distancePerPedalTurn is expressed in m, divide per 1000 for a distance in km
+    float expectedDistance = compute_distance(
+        pedalRotationTime, traySize, gearSize, wheelCircumference, travelTime);
+    printf("  Expected distance is %f, current distance is %f\n",
+           expectedDistance,
+           distance);
+    TEST_ASSERT_FLOAT_WITHIN(kAllowedDistanceDelta, expectedDistance, distance);
 }
 
 // test the speedometer by modifying the gear
-static control_t test_gear(const size_t call_count) {
-    // this is the always succeed test
+static control_t test_gear_size(const size_t call_count) {
+    // create a timer
     Timer timer;
     // start the timer
     timer.start();
 
     // create a speedometer instance
-    static_scheduling::SpeedometerDevice speedometer(timer);
-
-    // let the speedometer thread start properly
-    ThisThread::sleep_for(
-        static_scheduling::SpeedometerDevice::kInitialPedalRotationTime *
-        static_scheduling::SpeedometerDevice::kInitialRotationCount);
+    bike_system::Speedometer speedometer(timer);
 
     // get speedometer constant values (for this test)
-    const uint8_t traySize         = speedometer.getTraySize();
-    const float wheelCircumference = speedometer.getWheelCircumference();
-    const std::chrono::milliseconds pedalRotationTime =
-        speedometer.getCurrentPedalRotationTime();
+    const auto traySize           = speedometer.getTraySize();
+    const auto wheelCircumference = speedometer.getWheelCircumference();
+    const auto pedalRotationTime  = speedometer.getCurrentPedalRotationTime();
 
-    for (uint8_t gear = static_scheduling::GearSystemDevice::kMinGear;
-         gear <= static_scheduling::GearSystemDevice::kMaxGear;
-         gear++) {
+    for (uint8_t gearSize = bike_system::kMaxGearSize;
+         gearSize <= bike_system::kMaxGearSize;
+         gearSize++) {
         // set the gear
-        printf("Testing gear %d\n", gear);
-        speedometer.setGear(gear);
-
-        // let the speedometer update the speed
-        ThisThread::sleep_for(pedalRotationTime);
+        printf("Testing gear size %d\n", gearSize);
+        speedometer.setGearSize(gearSize);
 
         // get the current speed
-        float currentSpeed = speedometer.getCurrentSpeed();
+        auto currentSpeed = speedometer.getCurrentSpeed();
 
-        // test it
-        uint8_t gearSize = speedometer.getGearSize();
-        test_current_speed(
+        // check the speed against the expected one
+        check_current_speed(
             pedalRotationTime, traySize, gearSize, wheelCircumference, currentSpeed);
     }
 
@@ -102,71 +131,204 @@ static control_t test_gear(const size_t call_count) {
 
 // test the speedometer by modifying the pedal rotation speed
 static control_t test_rotation_speed(const size_t call_count) {
-    // this is the always succeed test
+    // create a timer
     Timer timer;
     // start the timer
     timer.start();
 
     // create a speedometer instance
-    static_scheduling::SpeedometerDevice speedometer(timer);
+    bike_system::Speedometer speedometer(timer);
 
-    // set the gear
-    speedometer.setGear(static_scheduling::GearSystemDevice::kMinGear);
-
-    // let the speedometer thread start properly
-    ThisThread::sleep_for(
-        static_scheduling::SpeedometerDevice::kInitialPedalRotationTime *
-        static_scheduling::SpeedometerDevice::kInitialRotationCount);
+    // set the gear size
+    speedometer.setGearSize(bike_system::kMaxGearSize);
 
     // get speedometer constant values
-    const uint8_t traySize         = speedometer.getTraySize();
-    const float wheelCircumference = speedometer.getWheelCircumference();
-    const uint8_t gearSize         = speedometer.getGearSize();
+    const auto traySize           = speedometer.getTraySize();
+    const auto wheelCircumference = speedometer.getWheelCircumference();
+    const auto gearSize           = speedometer.getGearSize();
 
     // first test increasing rotation speed (decreasing rotation time)
-    std::chrono::milliseconds pedalRotationTime =
-        speedometer.getCurrentPedalRotationTime();
-    while (pedalRotationTime >
-           static_scheduling::SpeedometerDevice::kMinPedalRotationTime) {
-        // increase the pedal rotation time
-        speedometer.increaseRotationSpeed();
-
-        // let the speedometer update the speed
-        ThisThread::sleep_for(pedalRotationTime);
-
-        // if the rotation speed is left unchanged, then we reached the largest rotation
-        // time
-        pedalRotationTime = speedometer.getCurrentPedalRotationTime();
+    auto pedalRotationTime = speedometer.getCurrentPedalRotationTime();
+    while (pedalRotationTime > bike_system::kMinPedalRotationTime) {
+        // decrease the pedal rotation time
+        pedalRotationTime -= bike_system::kDeltaPedalRotationTime;
+        speedometer.setCurrentRotationTime(pedalRotationTime);
 
         // get the current speed
-        float currentSpeed = speedometer.getCurrentSpeed();
+        const auto currentSpeed = speedometer.getCurrentSpeed();
 
-        // test it
-        test_current_speed(
+        // check the speed against the expected one
+        check_current_speed(
             pedalRotationTime, traySize, gearSize, wheelCircumference, currentSpeed);
     }
 
     // second test decreasing rotation speed (increasing rotation time)
     pedalRotationTime = speedometer.getCurrentPedalRotationTime();
-    while (pedalRotationTime <
-           static_scheduling::SpeedometerDevice::kMaxPedalRotationTime) {
-        // decrease the pedal rotation time
-        speedometer.decreaseRotationSpeed();
-
-        // let the speedometer update the speed
-        ThisThread::sleep_for(pedalRotationTime);
-
-        // if the rotation speed is left unchanged, then we reached the largest rotation
-        // time
-        pedalRotationTime = speedometer.getCurrentPedalRotationTime();
+    while (pedalRotationTime < bike_system::kMaxPedalRotationTime) {
+        // increase the pedal rotation time
+        pedalRotationTime += bike_system::kDeltaPedalRotationTime;
+        speedometer.setCurrentRotationTime(pedalRotationTime);
 
         // get the current speed
-        float currentSpeed = speedometer.getCurrentSpeed();
+        const auto currentSpeed = speedometer.getCurrentSpeed();
 
-        // test it
-        test_current_speed(
+        // check the speed against the expected one
+        check_current_speed(
             pedalRotationTime, traySize, gearSize, wheelCircumference, currentSpeed);
     }
+
+    // execute the test only once and move to the next one, without waiting
+    return CaseNext;
+}
+
+// test the speedometer by modifying the pedal rotation speed
+static control_t test_distance(const size_t call_count) {
+    // create a timer
+    Timer timer;
+
+    // create a speedometer instance
+    bike_system::Speedometer speedometer(timer);
+
+    // set the gear size
+    speedometer.setGearSize(bike_system::kMaxGearSize);
+
+    // get speedometer constant values
+    const auto traySize           = speedometer.getTraySize();
+    const auto wheelCircumference = speedometer.getWheelCircumference();
+    auto gearSize                 = speedometer.getGearSize();
+    auto pedalRotationTime        = speedometer.getCurrentPedalRotationTime();
+
+    // test different travel times
+    const std::chrono::milliseconds travelTimes[] = {500ms, 1000ms, 5s, 10s};
+    const uint8_t nbrOfTravelTimes = sizeof(travelTimes) / sizeof(travelTimes[0]);
+
+    // start the timer (for simulating bike start)
+    timer.start();
+
+    // first check travel distance without changing gear and rotation speed
+    std::chrono::milliseconds totalTravelTime = std::chrono::milliseconds::zero();
+    for (uint8_t index = 0; index < nbrOfTravelTimes; index++) {
+        // run for the travel time and get the distance
+        ThisThread::sleep_for(travelTimes[index]);
+
+        // get the distance traveled
+        const auto distance = speedometer.getDistance();
+
+        // accumulate travel time
+        totalTravelTime += travelTimes[index];
+
+        // check the distance vs the expected one
+        check_distance(pedalRotationTime,
+                       traySize,
+                       gearSize,
+                       wheelCircumference,
+                       totalTravelTime,
+                       distance);
+    }
+
+    // now change gear at each time interval
+    auto expectedDistance = speedometer.getDistance();
+    for (uint8_t index = 0; index < nbrOfTravelTimes; index++) {
+        // update the gear size
+        gearSize++;
+        speedometer.setGearSize(gearSize);
+
+        // run for the travel time and get the distance
+        ThisThread::sleep_for(travelTimes[index]);
+
+        // compute the expected distance for this time segment
+        float distance = compute_distance(pedalRotationTime,
+                                          traySize,
+                                          gearSize,
+                                          wheelCircumference,
+                                          travelTimes[index]);
+        expectedDistance += distance;
+
+        // get the distance traveled
+        const auto traveledDistance = speedometer.getDistance();
+
+        printf("  Expected distance is %f, current distance is %f\n",
+               expectedDistance,
+               traveledDistance);
+        TEST_ASSERT_FLOAT_WITHIN(
+            kAllowedDistanceDelta, expectedDistance, traveledDistance);
+    }
+    // now change rotation speed at each time interval
+    expectedDistance = speedometer.getDistance();
+    for (uint8_t index = 0; index < nbrOfTravelTimes; index++) {
+        // update the rotation speed
+        pedalRotationTime += bike_system::kDeltaPedalRotationTime;
+        speedometer.setCurrentRotationTime(pedalRotationTime);
+
+        // run for the travel time and get the distance
+        ThisThread::sleep_for(travelTimes[index]);
+
+        // compute the expected distance for this time segment
+        float distance = compute_distance(pedalRotationTime,
+                                          traySize,
+                                          gearSize,
+                                          wheelCircumference,
+                                          travelTimes[index]);
+        expectedDistance += distance;
+
+        // get the distance traveled
+        const auto traveledDistance = speedometer.getDistance();
+
+        printf("  Expected distance is %f, current distance is %f\n",
+               expectedDistance,
+               traveledDistance);
+        TEST_ASSERT_FLOAT_WITHIN(
+            kAllowedDistanceDelta, expectedDistance, traveledDistance);
+    }
+
+    // execute the test only once and move to the next one, without waiting
+    return CaseNext;
+}
+
+// test the speedometer by modifying the pedal rotation speed
+static control_t test_reset(const size_t call_count) {
+    // create a timer instance
+    Timer timer;
+
+    // create a speedometer instance
+    bike_system::Speedometer speedometer(timer);
+
+    // set the gear size
+    speedometer.setGearSize(bike_system::kMinGearSize);
+
+    // get speedometer constant values
+    const auto traySize           = speedometer.getTraySize();
+    const auto wheelCircumference = speedometer.getWheelCircumference();
+    const auto gearSize           = speedometer.getGearSize();
+    const auto pedalRotationTime  = speedometer.getCurrentPedalRotationTime();
+
+    // start the timer (for simulating bike start)
+    timer.start();
+
+    // travel for 1 second
+    const auto travelTime = 1000ms;
+    ThisThread::sleep_for(travelTime);
+
+    // check the expected distaance traveled
+    const auto expectedDistance = compute_distance(
+        pedalRotationTime, traySize, gearSize, wheelCircumference, travelTime);
+
+    // get the distance traveled
+    auto traveledDistance = speedometer.getDistance();
+
+    printf("  Expected distance is %f, current distance is %f\n",
+           expectedDistance,
+           traveledDistance);
+    TEST_ASSERT_FLOAT_WITHIN(kAllowedDistanceDelta, expectedDistance, traveledDistance);
+
+    // reset the speedometer
+    speedometer.reset();
+
+    // traveled distance should now be zero
+    traveledDistance = speedometer.getDistance();
+
+    printf("  Expected distance is %f, current distance is %f\n", 0.0f, traveledDistance);
+    TEST_ASSERT_FLOAT_WITHIN(kAllowedDistanceDelta, 0.0f, traveledDistance);
 
     // execute the test only once and move to the next one, without waiting
     return CaseNext;
@@ -182,8 +344,10 @@ static utest::v1::status_t greentea_setup(const size_t number_of_cases) {
 
 // List of test cases in this file
 static Case cases[] = {
-    Case("test speedometer gear change", test_gear),
-    Case("test speedometer rotation speed change", test_rotation_speed)};
+    Case("test speedometer gear size change", test_gear_size),
+    Case("test speedometer rotation speed change", test_rotation_speed),
+    Case("test speedometer distance", test_distance),
+    Case("test speedometer reset", test_reset)};
 
 static Specification specification(greentea_setup, cases);
 

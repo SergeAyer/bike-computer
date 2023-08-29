@@ -24,6 +24,8 @@
 
 #include "static_scheduling/bike_system.hpp"
 
+#include <chrono>
+
 #include "mbed_trace.h"
 #if MBED_CONF_MBED_TRACE_ENABLE
 #define TRACE_GROUP "BikeSystem"
@@ -31,7 +33,7 @@
 
 namespace static_scheduling {
 
-BikeSystem::BikeSystem() : _speedometerDevice(_timer), _resetDevice(_timer) {}
+BikeSystem::BikeSystem() : _resetDevice(_timer), _speedometer(_timer) {}
 
 void BikeSystem::start() {
     tr_info("Starting Super-Loop with no event handling");
@@ -52,31 +54,34 @@ void BikeSystem::start() {
     }
 
     // enable/disable task logging
-    _taskLogger.enable(false);
+    _taskLogger.enable(true);
 
     while (true) {
         // register the time at the beginning of the cyclic schedule period
         std::chrono::microseconds startTime = _timer.elapsed_time();
 
-        // perform tasks as documented in the timetable
-        uint8_t gear = readCurrentGear();
+        // update gear
+        /*const auto gear = readCurrentGear();
         updateGearOnDisplay(gear);
 
-        // tell to the speedometer device that the gear may have changed
-        _speedometerDevice.setGear(gear);
-
+        // update speed and distance
+        const auto pedalRotationTime = readCurrentPedalRotationTime();
+        const auto gearSize = readCurrentGearSize();
+        _speedometer.setCurrentRotationTime(pedalRotationTime);
+        _speedometer.setGearSize(gearSize);
         float speed = readSpeed();
         updateSpeedOnDisplay(speed);
-
         float distance = readDistance();
         updateDistanceOnDisplay(distance);
-
+*/
+        // update temperature
         float temperature = readTemperature();
         updateTemperatureOnDisplay(temperature);
 
+        // check for reset
         checkAndPerformReset();
 
-        ThisThread::sleep_for(std::chrono::milliseconds(100));
+        // ThisThread::sleep_for(std::chrono::milliseconds(100));
 
         // register the time at the end of the cyclic schedule period and print the
         // elapsed time for the period
@@ -90,7 +95,7 @@ void BikeSystem::start() {
 uint8_t BikeSystem::readCurrentGear() {
     std::chrono::microseconds taskStartTime = _timer.elapsed_time();
 
-    uint8_t gear = _gearSystemDevice.getCurrentGear();
+    uint8_t gear = _gearDevice.getCurrentGear();
 
     _taskLogger.logPeriodAndExecutionTime(
         _timer, utils::TaskLogger::kGearTaskIndex, taskStartTime);
@@ -98,10 +103,32 @@ uint8_t BikeSystem::readCurrentGear() {
     return gear;
 }
 
+uint8_t BikeSystem::readCurrentGearSize() {
+    std::chrono::microseconds taskStartTime = _timer.elapsed_time();
+
+    uint8_t gearSize = _gearDevice.getCurrentGearSize();
+
+    _taskLogger.logPeriodAndExecutionTime(
+        _timer, utils::TaskLogger::kGearTaskIndex, taskStartTime);
+
+    return gearSize;
+}
+
+std::chrono::milliseconds BikeSystem::readCurrentPedalRotationTime() {
+    std::chrono::microseconds taskStartTime = _timer.elapsed_time();
+
+    std::chrono::milliseconds pedalRotationTime = _pedalDevice.getCurrentRotationTime();
+
+    _taskLogger.logPeriodAndExecutionTime(
+        _timer, utils::TaskLogger::kGearTaskIndex, taskStartTime);
+
+    return pedalRotationTime;
+}
+
 float BikeSystem::readSpeed() {
     std::chrono::microseconds taskStartTime = _timer.elapsed_time();
 
-    float speed = _speedometerDevice.getCurrentSpeed();
+    float speed = _speedometer.getCurrentSpeed();
 
     _taskLogger.logPeriodAndExecutionTime(
         _timer, utils::TaskLogger::kCountTaskIndex, taskStartTime);
@@ -112,7 +139,7 @@ float BikeSystem::readSpeed() {
 float BikeSystem::readDistance() {
     std::chrono::microseconds taskStartTime = _timer.elapsed_time();
 
-    float distance = _speedometerDevice.getDistance();
+    float distance = _speedometer.getDistance();
 
     _taskLogger.logPeriodAndExecutionTime(
         _timer, utils::TaskLogger::kCountTaskIndex, taskStartTime);
@@ -138,7 +165,7 @@ void BikeSystem::updateGearOnDisplay(uint8_t gear) {
 
     std::chrono::microseconds taskEndTime   = _timer.elapsed_time();
     std::chrono::microseconds executionTime = taskEndTime - taskStartTime;
-    tr_debug("Display %" PRIu64 " usecs", executionTime.count());
+    tr_debug("Display gear %" PRIu64 " usecs", executionTime.count());
 
     _taskLogger.logPeriodAndExecutionTime(
         _timer, utils::TaskLogger::kDisplayTaskIndex, taskStartTime);
@@ -149,6 +176,10 @@ void BikeSystem::updateSpeedOnDisplay(float speed) {
 
     _displayDevice.displaySpeed(speed);
 
+    std::chrono::microseconds taskEndTime   = _timer.elapsed_time();
+    std::chrono::microseconds executionTime = taskEndTime - taskStartTime;
+    tr_debug("Display speed %" PRIu64 " usecs", executionTime.count());
+
     _taskLogger.logPeriodAndExecutionTime(
         _timer, utils::TaskLogger::kDisplayTaskIndex, taskStartTime);
 }
@@ -158,6 +189,10 @@ void BikeSystem::updateDistanceOnDisplay(float distance) {
 
     _displayDevice.displayDistance(distance);
 
+    std::chrono::microseconds taskEndTime   = _timer.elapsed_time();
+    std::chrono::microseconds executionTime = taskEndTime - taskStartTime;
+    tr_debug("Display distance %" PRIu64 " usecs", executionTime.count());
+
     _taskLogger.logPeriodAndExecutionTime(
         _timer, utils::TaskLogger::kDisplayTaskIndex, taskStartTime);
 }
@@ -166,6 +201,10 @@ void BikeSystem::updateTemperatureOnDisplay(float temperature) {
     std::chrono::microseconds taskStartTime = _timer.elapsed_time();
 
     _displayDevice.displayTemperature(temperature);
+
+    std::chrono::microseconds taskEndTime   = _timer.elapsed_time();
+    std::chrono::microseconds executionTime = taskEndTime - taskStartTime;
+    tr_debug("Display temperature %" PRIu64 " usecs", executionTime.count());
 
     _taskLogger.logPeriodAndExecutionTime(
         _timer, utils::TaskLogger::kDisplayTaskIndex, taskStartTime);
@@ -177,7 +216,7 @@ void BikeSystem::checkAndPerformReset() {
     if (_resetDevice.checkReset()) {
         tr_info("Reset task: response time is %" PRIu64 " usecs",
                 (_timer.elapsed_time() - _resetDevice.getFallTime()).count());
-        _speedometerDevice.reset();
+        _speedometer.reset();
     }
 
     _taskLogger.logPeriodAndExecutionTime(

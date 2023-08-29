@@ -29,7 +29,7 @@
 #define TRACE_GROUP "SensorDevice"
 #endif  // MBED_CONF_MBED_TRACE_ENABLE
 
-namespace common {
+namespace bike_system {
 
 SensorDevice::SensorDevice() : _hdc1000(PD_13, PD_12, PC_6) {}
 
@@ -46,4 +46,4 @@ float SensorDevice::readTemperature() { return _hdc1000.getTemperature(); }
 
 float SensorDevice::readHumidity() { return _hdc1000.getHumidity(); }
 
-}  // namespace common
+}  // namespace bike_system

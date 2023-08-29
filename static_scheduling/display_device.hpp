@@ -53,7 +53,7 @@ class DisplayDevice {
     static constexpr uint8_t kNbrOfSubTasks = 3;
 
     // BikeDisplay instance used for display information on the device screen
-    common::BikeDisplay _bikeDisplay;
+    bike_system::BikeDisplay _bikeDisplay;
 };
 
 }  // namespace static_scheduling

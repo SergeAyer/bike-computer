@@ -33,7 +33,7 @@ using namespace utest::v1;
 
 // test_hdc1000 test handler function
 static control_t test_hdc1000(const size_t call_count) {
-    // this is the always succeed test
+    // create the hdc1000 sensor instance
     sensors::HDC1000 hdc1000(PD_13, PD_12, PC_6);
 
     bool present = hdc1000.probe();
@@ -55,7 +55,7 @@ static control_t test_hdc1000(const size_t call_count) {
 
 // test_hdc1000 test handler function
 static control_t test_sensor_device(const size_t call_count) {
-    // this is the always succeed test
+    // create the SensorDevice instance
     common::SensorDevice sensorDevice;
 
     bool rc = sensorDevice.init();
