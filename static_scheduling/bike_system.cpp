@@ -61,19 +61,19 @@ void BikeSystem::start() {
         std::chrono::microseconds startTime = _timer.elapsed_time();
 
         // update gear
-        /*const auto gear = readCurrentGear();
+        const auto gear = readCurrentGear();
         updateGearOnDisplay(gear);
 
         // update speed and distance
         const auto pedalRotationTime = readCurrentPedalRotationTime();
-        const auto gearSize = readCurrentGearSize();
+        const auto gearSize          = readCurrentGearSize();
         _speedometer.setCurrentRotationTime(pedalRotationTime);
         _speedometer.setGearSize(gearSize);
         float speed = readSpeed();
         updateSpeedOnDisplay(speed);
         float distance = readDistance();
         updateDistanceOnDisplay(distance);
-*/
+
         // update temperature
         float temperature = readTemperature();
         updateTemperatureOnDisplay(temperature);
@@ -81,7 +81,7 @@ void BikeSystem::start() {
         // check for reset
         checkAndPerformReset();
 
-        // ThisThread::sleep_for(std::chrono::milliseconds(100));
+        ThisThread::sleep_for(5000ms);
 
         // register the time at the end of the cyclic schedule period and print the
         // elapsed time for the period

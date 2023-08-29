@@ -83,7 +83,7 @@ mbed_error_status_t  HDC1000::setReadRegister(uint8_t reg) {
 
   // busy wait for data ready
   uint16_t iteration = 0;
-  while (_dataReadyPin == 1 || iteration++ < 100) {
+  while (_dataReadyPin != kDataReadyActive && iteration++ < 100) {
     ThisThread::sleep_for(10ms);
   }
 

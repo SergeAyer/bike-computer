@@ -208,7 +208,7 @@ void BikeDisplay::displaySpeed(float speed) {
 
 void BikeDisplay::displayDistance(float distance) {
     char msg[10] = {0};
-    int strlen   = snprintf(msg, sizeof(msg), "%.2f km", distance / 1000.0f);
+    int strlen   = snprintf(msg, sizeof(msg), "%.2f km", distance);
     lcdDisplay.setFont(disco::createFont18());
     const uint32_t msgLen   = strlen * lcdDisplay.getFont()->width;
     const uint32_t textXPos = _distanceTextMidXPos - msgLen / 2;

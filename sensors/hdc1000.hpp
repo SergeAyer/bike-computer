@@ -1,4 +1,4 @@
-// Copyright 2022 Haute école d'ingénierie et d'architecture de Fribourg
+ // Copyright 2022 Haute école d'ingénierie et d'architecture de Fribourg
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -47,6 +47,10 @@ private:
   mbed_error_status_t setReadRegister(uint8_t reg);
   uint16_t read16(void);
   
+  // constants
+  // data ready pin is active low
+  static constexpr uint8_t kDataReadyActive = 0;
+
   // data members
   int _address;
   DigitalIn _dataReadyPin; 
