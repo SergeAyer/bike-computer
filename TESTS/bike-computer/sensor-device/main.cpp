@@ -56,7 +56,7 @@ static control_t test_hdc1000(const size_t call_count) {
 // test_hdc1000 test handler function
 static control_t test_sensor_device(const size_t call_count) {
     // create the SensorDevice instance
-    common::SensorDevice sensorDevice;
+    bike_system::SensorDevice sensorDevice;
 
     bool rc = sensorDevice.init();
     TEST_ASSERT_TRUE(rc);
