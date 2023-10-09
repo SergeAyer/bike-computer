@@ -26,7 +26,7 @@
 
 #if defined(TARGET_DISCO_H747I)
 #define PUSH_BUTTON BUTTON1
-#define POLARITY_PRESSED 1
+static constexpr uint8_t kPolarityPressed = 1;
 #endif
 
 namespace static_scheduling {
@@ -44,7 +44,7 @@ bool ResetDevice::checkReset() {
     // simulate task computation by waiting for the required task run time
     // wait_us(kTaskRunTime.count());
 
-    return _resetButton.read() == POLARITY_PRESSED;
+    return _resetButton.read() == kPolarityPressed;
 }
 
 }  // namespace static_scheduling

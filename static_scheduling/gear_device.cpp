@@ -38,7 +38,10 @@ namespace static_scheduling {
 // The gear value is updated every second
 static constexpr std::chrono::milliseconds kReadingRate = 1000ms;
 
-GearDevice::GearDevice() { _thread.start(callback(this, &GearDevice::read)); }
+GearDevice::GearDevice()
+    : _thread(osPriorityNormal, OS_STACK_SIZE, nullptr, "GearDeviceThread") {
+    _thread.start(callback(this, &GearDevice::read));
+}
 
 void GearDevice::read() {
     while (true) {

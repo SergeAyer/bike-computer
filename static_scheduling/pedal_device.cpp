@@ -37,7 +37,10 @@ namespace static_scheduling {
 // reading rate in milliseconds when running a separate thread
 static constexpr std::chrono::milliseconds kReadingRate = 1000ms;
 
-PedalDevice::PedalDevice() { _thread.start(callback(this, &PedalDevice::read)); }
+PedalDevice::PedalDevice()
+    : _thread(osPriorityNormal, OS_STACK_SIZE, nullptr, "PedalDeviceThread") {
+    _thread.start(callback(this, &PedalDevice::read));
+}
 
 void PedalDevice::read() {
     while (true) {

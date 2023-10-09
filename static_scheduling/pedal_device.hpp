@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "constants.hpp"
+#include "common/constants.hpp"
 #include "mbed.h"
 
 namespace static_scheduling {

@@ -24,9 +24,10 @@
 
 #pragma once
 
-#include "lcd_display.hpp"
 #include "mbed.h"
-#include "multi_tasking/data_types.hpp"
+
+// from DISCO_H747I
+#include "lcd_display.hpp"
 
 namespace bike_system {
 

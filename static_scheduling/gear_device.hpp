@@ -34,6 +34,10 @@ class GearDevice {
     // constructor used for simulating the device with a thread
     GearDevice();
 
+    // make the class non copyable
+    GearDevice(GearDevice&)            = delete;
+    GearDevice& operator=(GearDevice&) = delete;
+
     // method called for updating the bike system
     uint8_t getCurrentGear();
     uint8_t getCurrentGearSize();
