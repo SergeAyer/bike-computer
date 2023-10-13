@@ -14,17 +14,17 @@ jobs:
       matrix:
         target: [DISCO_H747I]
         profile: [release]
-            
+
 
     steps:
       -
         name: Checkout
         uses: actions/checkout@v2
-              
+
       -
         name: build
         run: |
           set -e
           mbed deploy
-          mbed test -t GCC_ARM -m ${{ matrix.target }} --profile ${{ matrix.profile }} --compile -n tests-bike-computer-sensor-device,tests-bike-computer-speedometer-device --app-config mbed_app_wo_bl.json
+          mbed test -t GCC_ARM -m ${{ matrix.target }} --profile ${{ matrix.profile }} --compile -n tests-sensors-sensor-device,tests-bike-computer-speedometer-device --app-config mbed_app_wo_bl.json
           mbed compile -t GCC_ARM -m ${{ matrix.target }} --profile ${{ matrix.profile }} --app-config mbed_app_wo_bl.json

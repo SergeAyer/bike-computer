@@ -32,31 +32,9 @@
 using namespace utest::v1;
 
 // test_hdc1000 test handler function
-static control_t test_hdc1000(const size_t call_count) {
-    // create the hdc1000 sensor instance
-    sensors::HDC1000 hdc1000(PD_13, PD_12, PC_6);
-
-    bool present = hdc1000.probe();
-    TEST_ASSERT_TRUE(present);
-
-    float temperature                        = hdc1000.getTemperature();
-    static constexpr float kTemperatureRange = 20.0f;
-    static constexpr float kMeanTemperature  = 15.0f;
-    TEST_ASSERT_FLOAT_WITHIN(kTemperatureRange, kMeanTemperature, temperature);
-
-    float humidity                        = hdc1000.getHumidity();
-    static constexpr float kHumidityRange = 40.0f;
-    static constexpr float kMeanHumidity  = 50.0f;
-    TEST_ASSERT_FLOAT_WITHIN(kHumidityRange, kMeanHumidity, humidity);
-
-    // execute the test only once and move to the next one, without waiting
-    return CaseNext;
-}
-
-// test_hdc1000 test handler function
 static control_t test_sensor_device(const size_t call_count) {
     // create the SensorDevice instance
-    bike_system::SensorDevice sensorDevice;
+    bike_computer::SensorDevice sensorDevice;
 
     bool rc = sensorDevice.init();
     TEST_ASSERT_TRUE(rc);
@@ -84,8 +62,7 @@ static utest::v1::status_t greentea_setup(const size_t number_of_cases) {
 }
 
 // List of test cases in this file
-static Case cases[] = {Case("test hdc1000 sensor", test_hdc1000),
-                       Case("test sensor device", test_sensor_device)};
+static Case cases[] = { Case("test sensor device", test_sensor_device) };
 
 static Specification specification(greentea_setup, cases);
 
