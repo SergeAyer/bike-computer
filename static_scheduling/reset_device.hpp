@@ -43,9 +43,6 @@ class ResetDevice {
     // called when the button is pressed
     void onFall();
 
-    // definition of task execution time
-    static constexpr std::chrono::microseconds kTaskRunTime = 100000us;
-
     // data members
     // instance representing the reset button
     InterruptIn _resetButton;

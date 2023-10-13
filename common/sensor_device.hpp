@@ -24,9 +24,8 @@
 
 #pragma once
 
-#include "mbed.h"
-
 #include "hdc1000.hpp"
+#include "mbed.h"
 
 namespace bike_computer {
 
@@ -43,9 +42,6 @@ class SensorDevice {
     float readHumidity();
 
    private:
-    // definition of task execution time
-    static constexpr std::chrono::microseconds kTaskRunTime = 100000us;
-
     // data members
     advembsof::HDC1000 _hdc1000;
 };

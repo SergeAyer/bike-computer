@@ -32,7 +32,7 @@ namespace static_scheduling {
 class PedalDevice {
    public:
     // constructor used for simulating the device with a thread
-    PedalDevice(Timer& timer);
+    explicit PedalDevice(Timer& timer);  // NOLINT(runtime/references)
 
     // method called for updating the bike system
     std::chrono::milliseconds getCurrentRotationTime();
@@ -42,14 +42,12 @@ class PedalDevice {
     void increaseRotationSpeed();
     void decreaseRotationSpeed();
 
-    // definition of task execution time
-    static constexpr std::chrono::microseconds kTaskRunTime = 100000us;
-
     // methods
     void read();
 
     // data members
-    std::chrono::milliseconds _pedalRotationTime = bike_computer::kInitialPedalRotationTime;
+    std::chrono::milliseconds _pedalRotationTime =
+        bike_computer::kInitialPedalRotationTime;
     Timer& _timer;
 };
 

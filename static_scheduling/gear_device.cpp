@@ -36,6 +36,9 @@
 
 namespace static_scheduling {
 
+// definition of task execution time
+static constexpr std::chrono::microseconds kTaskRunTime = 100000us;
+
 GearDevice::GearDevice(Timer& timer) : _timer(timer) {}
 
 uint8_t GearDevice::getCurrentGear() {

@@ -179,5 +179,4 @@ static Case cases[] = {
 
 static Specification specification(greentea_setup, cases);
 
-// cppcheck-suppress unusedFunction
 int main_solution() { return !Harness::run(specification); }

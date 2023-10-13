@@ -1,4 +1,4 @@
-files: ^(multi_tasking)|(main.cpp)|^(TESTS)|^(static_scheduling)|^(utils)|^(common)
+files: ^(static_scheduling)|^(common)|^(TESTS/bike-computer)|^(main.cpp)
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v4.3.0
@@ -22,10 +22,16 @@ repos:
       entry: lizard
       language: system
       args: [-C 12]
-- repo: local
+#- repo: https://github.com/pocc/pre-commit-hooks
+#  rev: master
+#  hooks:
+#  -   id: cppcheck
+#      entry: cppcheck --enable=all --suppress=missingInclude:* --inline-suppr -i mbed-os --error-exitcode=1
+#- repo: local
   hooks:
   -   id: cppcheck
       name: cppcheck
-      entry: cppcheck
+      files: ^(TESTS/bike-computer)|^(common)|^(main.cpp)
+      entry: cppcheck --enable=all --suppress=missingInclude:* --suppress=unusedFunction:common/*.cpp --inline-suppr -i mbed-os --std=c++14 --error-exitcode=1 -v
       language: system
-      args: [-IDISCO_H747I/Wrappers --std=c++14]
+

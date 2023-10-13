@@ -31,6 +31,9 @@ static constexpr uint8_t kPolarityPressed = 1;
 
 namespace static_scheduling {
 
+// definition of task execution time
+static constexpr std::chrono::microseconds kTaskRunTime = 100000us;
+
 ResetDevice::ResetDevice(Timer& timer) : _resetButton(PUSH_BUTTON), _timer(timer) {
     // register a callback for computing the response time
     _resetButton.fall(callback(this, &ResetDevice::onFall));

@@ -32,7 +32,7 @@ namespace static_scheduling {
 class GearDevice {
    public:
     // constructor used for simulating the device with a thread
-    GearDevice(Timer& timer);
+    explicit GearDevice(Timer& timer);  // NOLINT(runtime/references)
 
     // make the class non copyable
     GearDevice(GearDevice&)            = delete;
@@ -43,9 +43,6 @@ class GearDevice {
     uint8_t getCurrentGearSize() const;
 
    private:
-    // definition of task execution time
-    static constexpr std::chrono::microseconds kTaskRunTime = 100000us;
-
     // data members
     uint8_t _currentGear = bike_computer::kMinGear;
     Timer& _timer;

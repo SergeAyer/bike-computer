@@ -34,6 +34,9 @@
 
 namespace static_scheduling {
 
+// definition of task execution time
+static constexpr std::chrono::microseconds kTaskRunTime = 100000us;
+
 PedalDevice::PedalDevice(Timer& timer) : _timer(timer) {}
 
 std::chrono::milliseconds PedalDevice::getCurrentRotationTime() {

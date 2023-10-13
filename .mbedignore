@@ -17,18 +17,11 @@ mbed-os/platform/randlib/*
 mbed-os/storage/kvstore/*
 mbed-os-bootloader/*
 
-disco_h747i/Fonts/font8.c
-disco_h747i/Fonts/font12.c
-disco_h747i/Fonts/font16.c
-disco_h747i/Fonts/font20.c
-disco_h747i/Fonts/font24.c
-
 _static_scheduling/*
 static_scheduling_with_event/*
 multi_threading/*
-multi_tasking/* 
+multi_tasking/*
 
 main_old.cpp
 backup/*
 demo/*
-

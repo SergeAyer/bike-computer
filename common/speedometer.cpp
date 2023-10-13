@@ -79,15 +79,9 @@ std::chrono::milliseconds Speedometer::getCurrentPedalRotationTime() const {
     return _pedalRotationTime;
 }
 
-float Speedometer::getCurrentSpeed() const {
-    // simulate task computation by waiting for the required task run time
-    // wait_us(kTaskRunTime.count());
-    return _currentSpeed;
-}
+float Speedometer::getCurrentSpeed() const { return _currentSpeed; }
 
 float Speedometer::getDistance() {
-    // simulate task computation by waiting for the required task run time
-    // wait_us(kTaskRunTime.count());
     // make sure to update the distance traveled
     computeDistance();
     return _totalDistance;
