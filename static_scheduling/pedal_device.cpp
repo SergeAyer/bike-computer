@@ -34,16 +34,12 @@
 
 namespace static_scheduling {
 
-// reading rate in milliseconds when running a separate thread
-static constexpr std::chrono::milliseconds kReadingRate = 1000ms;
+PedalDevice::PedalDevice(Timer& timer) : _timer(timer) {}
 
-PedalDevice::PedalDevice()
-    : _thread(osPriorityNormal, OS_STACK_SIZE, nullptr, "PedalDeviceThread") {
-    _thread.start(callback(this, &PedalDevice::read));
-}
-
-void PedalDevice::read() {
-    while (true) {
+std::chrono::milliseconds PedalDevice::getCurrentRotationTime() {
+    std::chrono::microseconds initialTime = _timer.elapsed_time();
+    std::chrono::microseconds elapsedTime = std::chrono::microseconds::zero();
+    while (elapsedTime < kTaskRunTime) {
         // check whether rotation speed has been updated
         disco::Joystick::State joystickState = disco::Joystick::getInstance().getState();
         switch (joystickState) {
@@ -58,25 +54,20 @@ void PedalDevice::read() {
             default:
                 break;
         }
-        ThisThread::sleep_for(kReadingRate);
+        elapsedTime = _timer.elapsed_time() - initialTime;
     }
-}
-
-std::chrono::milliseconds PedalDevice::getCurrentRotationTime() {
-    // simulate task computation by waiting for the required task run time
-    // wait_us(kTaskRunTime.count());
     return _pedalRotationTime;
 }
 
 void PedalDevice::increaseRotationSpeed() {
-    if (_pedalRotationTime > bike_system::kMinPedalRotationTime) {
-        _pedalRotationTime -= bike_system::kDeltaPedalRotationTime;
+    if (_pedalRotationTime > bike_computer::kMinPedalRotationTime) {
+        _pedalRotationTime -= bike_computer::kDeltaPedalRotationTime;
     }
 }
 
 void PedalDevice::decreaseRotationSpeed() {
-    if (_pedalRotationTime < bike_system::kMaxPedalRotationTime) {
-        _pedalRotationTime += bike_system::kDeltaPedalRotationTime;
+    if (_pedalRotationTime < bike_computer::kMaxPedalRotationTime) {
+        _pedalRotationTime += bike_computer::kDeltaPedalRotationTime;
     }
 }
 

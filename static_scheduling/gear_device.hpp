@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "common/constants.hpp"
+#include "constants.hpp"
 #include "mbed.h"
 
 namespace static_scheduling {
@@ -32,7 +32,7 @@ namespace static_scheduling {
 class GearDevice {
    public:
     // constructor used for simulating the device with a thread
-    GearDevice();
+    GearDevice(Timer& timer);
 
     // make the class non copyable
     GearDevice(GearDevice&)            = delete;
@@ -40,18 +40,15 @@ class GearDevice {
 
     // method called for updating the bike system
     uint8_t getCurrentGear();
-    uint8_t getCurrentGearSize();
+    uint8_t getCurrentGearSize() const;
 
    private:
     // definition of task execution time
     static constexpr std::chrono::microseconds kTaskRunTime = 100000us;
 
-    // methods
-    void read();
-
     // data members
-    uint8_t _currentGear = bike_system::kMinGear;
-    Thread _thread;
+    uint8_t _currentGear = bike_computer::kMinGear;
+    Timer& _timer;
 };
 
 }  // namespace static_scheduling

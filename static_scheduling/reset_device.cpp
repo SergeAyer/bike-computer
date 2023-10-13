@@ -41,10 +41,17 @@ void ResetDevice::onFall() { _fallTime = _timer.elapsed_time(); }
 const std::chrono::microseconds& ResetDevice::getFallTime() { return _fallTime; }
 
 bool ResetDevice::checkReset() {
-    // simulate task computation by waiting for the required task run time
-    // wait_us(kTaskRunTime.count());
+    bool reset                            = false;
+    std::chrono::microseconds initialTime = _timer.elapsed_time();
+    std::chrono::microseconds elapsedTime = std::chrono::microseconds::zero();
+    while (elapsedTime < kTaskRunTime) {
+        if (!reset) {
+            reset = _resetButton.read() == kPolarityPressed;
+        }
 
-    return _resetButton.read() == kPolarityPressed;
+        elapsedTime = _timer.elapsed_time() - initialTime;
+    }
+    return reset;
 }
 
 }  // namespace static_scheduling

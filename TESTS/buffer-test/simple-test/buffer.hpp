@@ -33,6 +33,7 @@ class Buffer {
     void append(uint32_t datum) {
         _producerConsumerQueue.try_put_for(
             Kernel::wait_for_u32_forever,
+            // cppcheck-suppress cstyleCast
             (uint32_t*)datum);  // NOLINT(readability/casting)
     }
 

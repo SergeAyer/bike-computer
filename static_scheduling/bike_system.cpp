@@ -33,7 +33,13 @@
 
 namespace static_scheduling {
 
-BikeSystem::BikeSystem() : _resetDevice(_timer), _speedometer(_timer) {}
+static constexpr std::chrono::microseconds kSensorTaskRunTime = 1000ms;
+
+BikeSystem::BikeSystem()
+    : _gearDevice(_timer),
+      _pedalDevice(_timer),
+      _resetDevice(_timer),
+      _speedometer(_timer) {}
 
 void BikeSystem::start() {
     tr_info("Starting Super-Loop with no event handling");
@@ -58,28 +64,62 @@ void BikeSystem::start() {
 
     while (true) {
         // register the time at the beginning of the cyclic schedule period
-        std::chrono::microseconds startTime = _timer.elapsed_time();
+        auto startTime = _timer.elapsed_time();
 
-        // update gear
-        const auto gear = readCurrentGear();
-        updateGearOnDisplay(gear);
+        // gear task
+        auto taskStartTime = _timer.elapsed_time();
 
-        // update speed and distance
-        const auto pedalRotationTime = readCurrentPedalRotationTime();
-        const auto gearSize          = readCurrentGearSize();
+        const auto gear     = _gearDevice.getCurrentGear();
+        const auto gearSize = _gearDevice.getCurrentGearSize();
+
+        _taskLogger.logPeriodAndExecutionTime(
+            _timer, advembsof::TaskLogger::kGearTaskIndex, taskStartTime);
+
+        // speed and distance task
+        taskStartTime = _timer.elapsed_time();
+
+        const auto pedalRotationTime = _pedalDevice.getCurrentRotationTime();
         _speedometer.setCurrentRotationTime(pedalRotationTime);
         _speedometer.setGearSize(gearSize);
-        float speed = readSpeed();
-        updateSpeedOnDisplay(speed);
-        float distance = readDistance();
-        updateDistanceOnDisplay(distance);
+        const auto speed    = _speedometer.getCurrentSpeed();
+        const auto distance = _speedometer.getDistance();
 
-        // update temperature
-        float temperature = readTemperature();
-        updateTemperatureOnDisplay(temperature);
+        _taskLogger.logPeriodAndExecutionTime(
+            _timer, advembsof::TaskLogger::kSpeedTaskIndex, taskStartTime);
 
-        // check for reset
-        checkAndPerformReset();
+        // temperature task
+        taskStartTime = _timer.elapsed_time();
+
+        const auto temperature = _sensorDevice.readTemperature();
+
+        // simulate task computation by waiting for the required task run time
+        wait_us(kSensorTaskRunTime.count());
+
+        _taskLogger.logPeriodAndExecutionTime(
+            _timer, advembsof::TaskLogger::kSensorTaskIndex, taskStartTime);
+
+        // reset task
+        taskStartTime = _timer.elapsed_time();
+
+        if (_resetDevice.checkReset()) {
+            tr_info("Reset task: response time is %" PRIu64 " usecs",
+                    (_timer.elapsed_time() - _resetDevice.getFallTime()).count());
+            _speedometer.reset();
+        }
+
+        _taskLogger.logPeriodAndExecutionTime(
+            _timer, advembsof::TaskLogger::kResetTaskIndex, taskStartTime);
+
+        // display task
+        taskStartTime = _timer.elapsed_time();
+
+        _displayDevice.displayGear(gear);
+        _displayDevice.displaySpeed(speed);
+        _displayDevice.displayDistance(distance);
+        _displayDevice.displayTemperature(temperature);
+
+        _taskLogger.logPeriodAndExecutionTime(
+            _timer, advembsof::TaskLogger::kDisplayTaskIndex, taskStartTime);
 
         ThisThread::sleep_for(5000ms);
 
@@ -90,137 +130,6 @@ void BikeSystem::start() {
             std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
         tr_debug("Repeating cycle time is %" PRIu64 " milliseconds", cycle.count());
     }
-}
-
-uint8_t BikeSystem::readCurrentGear() {
-    std::chrono::microseconds taskStartTime = _timer.elapsed_time();
-
-    uint8_t gear = _gearDevice.getCurrentGear();
-
-    _taskLogger.logPeriodAndExecutionTime(
-        _timer, utils::TaskLogger::kGearTaskIndex, taskStartTime);
-
-    return gear;
-}
-
-uint8_t BikeSystem::readCurrentGearSize() {
-    std::chrono::microseconds taskStartTime = _timer.elapsed_time();
-
-    uint8_t gearSize = _gearDevice.getCurrentGearSize();
-
-    _taskLogger.logPeriodAndExecutionTime(
-        _timer, utils::TaskLogger::kGearTaskIndex, taskStartTime);
-
-    return gearSize;
-}
-
-std::chrono::milliseconds BikeSystem::readCurrentPedalRotationTime() {
-    std::chrono::microseconds taskStartTime = _timer.elapsed_time();
-
-    std::chrono::milliseconds pedalRotationTime = _pedalDevice.getCurrentRotationTime();
-
-    _taskLogger.logPeriodAndExecutionTime(
-        _timer, utils::TaskLogger::kGearTaskIndex, taskStartTime);
-
-    return pedalRotationTime;
-}
-
-float BikeSystem::readSpeed() {
-    std::chrono::microseconds taskStartTime = _timer.elapsed_time();
-
-    float speed = _speedometer.getCurrentSpeed();
-
-    _taskLogger.logPeriodAndExecutionTime(
-        _timer, utils::TaskLogger::kCountTaskIndex, taskStartTime);
-
-    return speed;
-}
-
-float BikeSystem::readDistance() {
-    std::chrono::microseconds taskStartTime = _timer.elapsed_time();
-
-    float distance = _speedometer.getDistance();
-
-    _taskLogger.logPeriodAndExecutionTime(
-        _timer, utils::TaskLogger::kCountTaskIndex, taskStartTime);
-
-    return distance;
-}
-
-float BikeSystem::readTemperature() {
-    std::chrono::microseconds taskStartTime = _timer.elapsed_time();
-
-    float temperature = _sensorDevice.readTemperature();
-
-    _taskLogger.logPeriodAndExecutionTime(
-        _timer, utils::TaskLogger::kSensorTaskIndex, taskStartTime);
-
-    return temperature;
-}
-
-void BikeSystem::updateGearOnDisplay(uint8_t gear) {
-    std::chrono::microseconds taskStartTime = _timer.elapsed_time();
-
-    _displayDevice.displayGear(gear);
-
-    std::chrono::microseconds taskEndTime   = _timer.elapsed_time();
-    std::chrono::microseconds executionTime = taskEndTime - taskStartTime;
-    tr_debug("Display gear %" PRIu64 " usecs", executionTime.count());
-
-    _taskLogger.logPeriodAndExecutionTime(
-        _timer, utils::TaskLogger::kDisplayTaskIndex, taskStartTime);
-}
-
-void BikeSystem::updateSpeedOnDisplay(float speed) {
-    std::chrono::microseconds taskStartTime = _timer.elapsed_time();
-
-    _displayDevice.displaySpeed(speed);
-
-    std::chrono::microseconds taskEndTime   = _timer.elapsed_time();
-    std::chrono::microseconds executionTime = taskEndTime - taskStartTime;
-    tr_debug("Display speed %" PRIu64 " usecs", executionTime.count());
-
-    _taskLogger.logPeriodAndExecutionTime(
-        _timer, utils::TaskLogger::kDisplayTaskIndex, taskStartTime);
-}
-
-void BikeSystem::updateDistanceOnDisplay(float distance) {
-    std::chrono::microseconds taskStartTime = _timer.elapsed_time();
-
-    _displayDevice.displayDistance(distance);
-
-    std::chrono::microseconds taskEndTime   = _timer.elapsed_time();
-    std::chrono::microseconds executionTime = taskEndTime - taskStartTime;
-    tr_debug("Display distance %" PRIu64 " usecs", executionTime.count());
-
-    _taskLogger.logPeriodAndExecutionTime(
-        _timer, utils::TaskLogger::kDisplayTaskIndex, taskStartTime);
-}
-
-void BikeSystem::updateTemperatureOnDisplay(float temperature) {
-    std::chrono::microseconds taskStartTime = _timer.elapsed_time();
-
-    _displayDevice.displayTemperature(temperature);
-
-    std::chrono::microseconds taskEndTime   = _timer.elapsed_time();
-    std::chrono::microseconds executionTime = taskEndTime - taskStartTime;
-    tr_debug("Display temperature %" PRIu64 " usecs", executionTime.count());
-
-    _taskLogger.logPeriodAndExecutionTime(
-        _timer, utils::TaskLogger::kDisplayTaskIndex, taskStartTime);
-}
-
-void BikeSystem::checkAndPerformReset() {
-    std::chrono::microseconds taskStartTime = _timer.elapsed_time();
-
-    if (_resetDevice.checkReset()) {
-        tr_info("Reset task: response time is %" PRIu64 " usecs",
-                (_timer.elapsed_time() - _resetDevice.getFallTime()).count());
-        _speedometer.reset();
-    }
-
-    _taskLogger.logPeriodAndExecutionTime(
-        _timer, utils::TaskLogger::kResetTaskIndex, taskStartTime);
 }
 
 }  // namespace static_scheduling

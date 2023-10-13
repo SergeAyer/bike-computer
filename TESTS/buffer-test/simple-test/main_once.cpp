@@ -70,4 +70,5 @@ static Case cases[] = {
 
 static utest::v1::Specification specification(greentea_setup, cases);
 
+// cppcheck-suppress unusedFunction
 int main_once() { return !utest::v1::Harness::run(specification); }

@@ -47,7 +47,7 @@ static status_t check_producer_consumer_setup(const Case* const source,
 }
 
 static control_t check_producer_consumer(const size_t call_count) {
-    printf("Called for the %u. time\n", call_count);
+    printf("Called for the %" PRIui64 ". time\n", call_count);
     // create a buffer
     Buffer buffer;
     // nbr of values to be produced/consumed for the test

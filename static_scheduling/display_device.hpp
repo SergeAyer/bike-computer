@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "common/bike_display.hpp"
+#include "bike_display.hpp"
 #include "mbed.h"
 
 namespace static_scheduling {
@@ -53,7 +53,7 @@ class DisplayDevice {
     static constexpr uint8_t kNbrOfSubTasks = 3;
 
     // BikeDisplay instance used for display information on the device screen
-    bike_system::BikeDisplay _bikeDisplay;
+    advembsof::BikeDisplay _bikeDisplay;
 };
 
 }  // namespace static_scheduling

@@ -68,13 +68,13 @@ static void put_full_timeout() {
     Queue<uint32_t, 2> q;
 
     // insert one element
-    uint32_t msg = 0;
-    bool res     = q.try_put_for(TEST_TIMEOUT, &msg);
+    uint32_t localMsg = 0;
+    bool res          = q.try_put_for(TEST_TIMEOUT, &localMsg);
     // should succeed
     TEST_ASSERT_TRUE(res);
 
     // insert a second element
-    res = q.try_put_for(TEST_TIMEOUT, &msg);
+    res = q.try_put_for(TEST_TIMEOUT, &localMsg);
     // should succeed
     TEST_ASSERT_TRUE(res);
 
@@ -82,7 +82,7 @@ static void put_full_timeout() {
     Timer timer;
     timer.start();
 
-    res = q.try_put_for(TEST_TIMEOUT, &msg);
+    res = q.try_put_for(TEST_TIMEOUT, &localMsg);
     // should fail
     TEST_ASSERT_FALSE(res);
     // elapsed time should match the timeout value

@@ -25,6 +25,8 @@
 #include "static_scheduling/gear_device.hpp"
 
 // from disco_h747i/wrappers
+#include <chrono>
+
 #include "joystick.hpp"
 #include "mbed_trace.h"
 
@@ -34,27 +36,22 @@
 
 namespace static_scheduling {
 
-// reading rate in milliseconds when running a separate thread
-// The gear value is updated every second
-static constexpr std::chrono::milliseconds kReadingRate = 1000ms;
+GearDevice::GearDevice(Timer& timer) : _timer(timer) {}
 
-GearDevice::GearDevice()
-    : _thread(osPriorityNormal, OS_STACK_SIZE, nullptr, "GearDeviceThread") {
-    _thread.start(callback(this, &GearDevice::read));
-}
-
-void GearDevice::read() {
-    while (true) {
+uint8_t GearDevice::getCurrentGear() {
+    std::chrono::microseconds initialTime = _timer.elapsed_time();
+    std::chrono::microseconds elapsedTime = std::chrono::microseconds::zero();
+    while (elapsedTime < kTaskRunTime) {
         disco::Joystick::State joystickState = disco::Joystick::getInstance().getState();
         switch (joystickState) {
             case disco::Joystick::State::UpPressed:
-                if (_currentGear < bike_system::kMaxGear) {
+                if (_currentGear < bike_computer::kMaxGear) {
                     _currentGear++;
                 }
                 break;
 
             case disco::Joystick::State::DownPressed:
-                if (_currentGear > bike_system::kMinGear) {
+                if (_currentGear > bike_computer::kMinGear) {
                     _currentGear--;
                 }
                 break;
@@ -62,20 +59,15 @@ void GearDevice::read() {
             default:
                 break;
         }
-        ThisThread::sleep_for(kReadingRate);
+        elapsedTime = _timer.elapsed_time() - initialTime;
     }
-}
-
-uint8_t GearDevice::getCurrentGear() {
-    // simulate task computation by waiting for the required task run time
-    // wait_us(kTaskRunTime.count());
     return _currentGear;
 }
 
-uint8_t GearDevice::getCurrentGearSize() {
+uint8_t GearDevice::getCurrentGearSize() const {
     // simulate task computation by waiting for the required task run time
     // wait_us(kTaskRunTime.count());
-    return bike_system::kMaxGearSize - _currentGear;
+    return bike_computer::kMaxGearSize - _currentGear;
 }
 
 }  // namespace static_scheduling

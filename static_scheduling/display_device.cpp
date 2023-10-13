@@ -43,26 +43,16 @@ disco::ReturnCode DisplayDevice::init() {
 
 void DisplayDevice::displayGear(uint8_t currentGear) {
     _bikeDisplay.displayGear(currentGear);
-    // simulate task computation by waiting for the required task run time
-    // wait_us(kSubTaskRunTime.count());
 }
 
-void DisplayDevice::displaySpeed(float speed) {
-    _bikeDisplay.displaySpeed(speed);
-    // simulate task computation by waiting for the required task run time
-    // wait_us(kSubTaskRunTime.count());
-}
+void DisplayDevice::displaySpeed(float speed) { _bikeDisplay.displaySpeed(speed); }
 
 void DisplayDevice::displayDistance(float distance) {
     _bikeDisplay.displayDistance(distance);
-    // simulate task computation by waiting for the required task run time
-    // wait_us(kSubTaskRunTime.count());
 }
 
 void DisplayDevice::displayTemperature(float temperature) {
     _bikeDisplay.displayTemperature(temperature);
-    // simulate task computation by waiting for the required task run time
-    // wait_us(kSubTaskRunTime.count());
 }
 
 }  // namespace static_scheduling

@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "common/constants.hpp"
+#include "constants.hpp"
 #include "mbed.h"
 
 namespace static_scheduling {
@@ -32,7 +32,7 @@ namespace static_scheduling {
 class PedalDevice {
    public:
     // constructor used for simulating the device with a thread
-    PedalDevice();
+    PedalDevice(Timer& timer);
 
     // method called for updating the bike system
     std::chrono::milliseconds getCurrentRotationTime();
@@ -49,8 +49,8 @@ class PedalDevice {
     void read();
 
     // data members
-    std::chrono::milliseconds _pedalRotationTime = bike_system::kInitialPedalRotationTime;
-    Thread _thread;
+    std::chrono::milliseconds _pedalRotationTime = bike_computer::kInitialPedalRotationTime;
+    Timer& _timer;
 };
 
 }  // namespace static_scheduling
