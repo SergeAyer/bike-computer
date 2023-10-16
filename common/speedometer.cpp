@@ -42,25 +42,6 @@ Speedometer::Speedometer(Timer& timer) : _timer(timer) {
     _lastTime = _timer.elapsed_time();
 }
 
-void Speedometer::setGearSize(uint8_t gearSize) {
-    if (_gearSize != gearSize) {
-        // compute distance before chaning the gear size
-        computeDistance();
-
-        // change gear size
-        _gearSize = gearSize;
-
-        // compute speed with the new gear size
-        computeSpeed();
-    }
-}
-
-uint8_t Speedometer::getGearSize() const { return _gearSize; }
-
-float Speedometer::getWheelCircumference() const { return kWheelCircumference; }
-
-float Speedometer::getTraySize() const { return kTraySize; }
-
 void Speedometer::setCurrentRotationTime(
     const std::chrono::milliseconds& currentRotationTime) {
     if (_pedalRotationTime != currentRotationTime) {
@@ -75,8 +56,17 @@ void Speedometer::setCurrentRotationTime(
     }
 }
 
-std::chrono::milliseconds Speedometer::getCurrentPedalRotationTime() const {
-    return _pedalRotationTime;
+void Speedometer::setGearSize(uint8_t gearSize) {
+    if (_gearSize != gearSize) {
+        // compute distance before chaning the gear size
+        computeDistance();
+
+        // change gear size
+        _gearSize = gearSize;
+
+        // compute speed with the new gear size
+        computeSpeed();
+    }
 }
 
 float Speedometer::getCurrentSpeed() const { return _currentSpeed; }
@@ -92,6 +82,19 @@ void Speedometer::reset() {
     _totalDistance = 0.0f;
     _totalDistanceMutex.unlock();
 }
+
+#if defined(MBED_TEST_MODE)
+uint8_t Speedometer::getGearSize() const { return _gearSize; }
+
+float Speedometer::getWheelCircumference() const { return kWheelCircumference; }
+
+float Speedometer::getTraySize() const { return kTraySize; }
+
+std::chrono::milliseconds Speedometer::getCurrentPedalRotationTime() const {
+    return _pedalRotationTime;
+}
+
+#endif  // defined(MBED_TEST_MODE)
 
 void Speedometer::computeSpeed() {
     // For computing the speed given a rear gear (braquet), one must divide the size of

@@ -36,26 +36,28 @@ class Speedometer {
 
     explicit Speedometer(Timer& timer);  // NOLINT(runtime/references)
 
-    // methods used for setting/getting the current gear
-    void setGearSize(uint8_t gearSize);
-    uint8_t getGearSize() const;
-
-    // method called for getting the wheel circumference
-    float getWheelCircumference() const;
-    // method called for getting the tray size
-    float getTraySize() const;
-
-    // method called for setting/getting the current pedal rotation time
+    // method used for setting the current pedal rotation time
     void setCurrentRotationTime(const std::chrono::milliseconds& currentRotationTime);
-    std::chrono::milliseconds getCurrentPedalRotationTime() const;
+
+    // method used for setting/getting the current gear
+    void setGearSize(uint8_t gearSize);
 
     // method called for getting the current speed (expressed in km / h)
     float getCurrentSpeed() const;
-    // method called for getting the current distance (expressed in km)
+
+    // method called for getting the current traveled distance (expressed in km)
     float getDistance();
 
     // method called for resetting the traveled distance
     void reset();
+
+    // methods used for tests only
+#if defined(MBED_TEST_MODE)
+    uint8_t getGearSize() const;
+    float getWheelCircumference() const;
+    float getTraySize() const;
+    std::chrono::milliseconds getCurrentPedalRotationTime() const;
+#endif  // defined(MBED_TEST_MODE)
 
    private:
     // private methods
