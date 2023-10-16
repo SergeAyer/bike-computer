@@ -45,9 +45,10 @@ std::chrono::milliseconds PedalDevice::getCurrentRotationTime() {
     // we bound the change to one increment/decrement per call
     bool hasChanged = false;
     while (elapsedTime < kTaskRunTime) {
-        if (! hasChanged) {
+        if (!hasChanged) {
             // check whether rotation speed has been updated
-            disco::Joystick::State joystickState = disco::Joystick::getInstance().getState();
+            disco::Joystick::State joystickState =
+                disco::Joystick::getInstance().getState();
             switch (joystickState) {
                 case disco::Joystick::State::RightPressed:
                     increaseRotationSpeed();

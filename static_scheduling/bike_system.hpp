@@ -46,7 +46,7 @@ class BikeSystem {
 
     // method called in main() for starting the system
     void start();
-    
+
     // method called for stopping the system
     void stop();
 
@@ -80,7 +80,7 @@ class BikeSystem {
     bike_computer::Speedometer _speedometer;
     // data member that represents the sensor device
     bike_computer::SensorDevice _sensorDevice;
-  
+
     // used for logging task info
     advembsof::TaskLogger _taskLogger;
 };

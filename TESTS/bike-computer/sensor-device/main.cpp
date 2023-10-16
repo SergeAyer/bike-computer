@@ -62,7 +62,7 @@ static utest::v1::status_t greentea_setup(const size_t number_of_cases) {
 }
 
 // List of test cases in this file
-static Case cases[] = { Case("test sensor device", test_sensor_device) };
+static Case cases[] = {Case("test sensor device", test_sensor_device)};
 
 static Specification specification(greentea_setup, cases);
 

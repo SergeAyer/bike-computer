@@ -47,9 +47,10 @@ uint8_t GearDevice::getCurrentGear() {
     // we bound the change to one increment/decrement per call
     bool hasChanged = false;
     while (elapsedTime < kTaskRunTime) {
-        if (! hasChanged) {
-            disco::Joystick::State joystickState = disco::Joystick::getInstance().getState();
-                switch (joystickState) {
+        if (!hasChanged) {
+            disco::Joystick::State joystickState =
+                disco::Joystick::getInstance().getState();
+            switch (joystickState) {
                 case disco::Joystick::State::UpPressed:
                     if (_currentGear < bike_computer::kMaxGear) {
                         _currentGear++;

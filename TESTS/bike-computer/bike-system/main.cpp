@@ -22,14 +22,15 @@
  * @version 0.1.0
  ***************************************************************************/
 
+#include <chrono>
+
+#include "bike_system.hpp"
 #include "greentea-client/test_env.h"
 #include "hdc1000.hpp"
 #include "mbed.h"
-#include "bike_system.hpp"
 #include "task_logger.hpp"
 #include "unity/unity.h"
 #include "utest/utest.h"
-#include <chrono>
 
 using namespace utest::v1;
 
@@ -41,7 +42,7 @@ static control_t test_bike_system(const size_t call_count) {
     // run the bike system in a separate thread
     Thread thread;
     thread.start(callback(&bikeSystem, &static_scheduling::BikeSystem::start));
-    
+
     // let the bike system run for 20 secs
     ThisThread::sleep_for(20s);
 
@@ -49,18 +50,23 @@ static control_t test_bike_system(const size_t call_count) {
     bikeSystem.stop();
 
     // check whether scheduling was correct
-    constexpr std::chrono::microseconds taskComputationTimes[] = { 100000us, 200000us, 100000us, 100000us, 200000us, 100000us};
-    constexpr std::chrono::microseconds taskPeriods[] = { 800000us, 400000us, 1600000us, 800000us, 1600000us, 1600000us};
+    constexpr std::chrono::microseconds taskComputationTimes[] = {
+        100000us, 200000us, 100000us, 100000us, 200000us, 100000us};
+    constexpr std::chrono::microseconds taskPeriods[] = {
+        800000us, 400000us, 1600000us, 800000us, 1600000us, 1600000us};
 
     // allow for 1 msec offset
     uint64_t deltaUs = 1000;
-    for (uint8_t taskIndex = 0; taskIndex < advembsof::TaskLogger::kNbrOfTasks; taskIndex++) {
-          TEST_ASSERT_UINT64_WITHIN(deltaUs, 
-                                    taskPeriods[taskIndex].count(), 
-                                    bikeSystem.getTaskLogger().getPeriod(taskIndex).count());
-          TEST_ASSERT_UINT64_WITHIN(deltaUs, 
-                                    taskComputationTimes[taskIndex].count(), 
-                                    bikeSystem.getTaskLogger().getComputationTime(taskIndex).count());
+    for (uint8_t taskIndex = 0; taskIndex < advembsof::TaskLogger::kNbrOfTasks;
+         taskIndex++) {
+        TEST_ASSERT_UINT64_WITHIN(
+            deltaUs,
+            taskPeriods[taskIndex].count(),
+            bikeSystem.getTaskLogger().getPeriod(taskIndex).count());
+        TEST_ASSERT_UINT64_WITHIN(
+            deltaUs,
+            taskComputationTimes[taskIndex].count(),
+            bikeSystem.getTaskLogger().getComputationTime(taskIndex).count());
     }
 
     // execute the test only once and move to the next one, without waiting
@@ -76,7 +82,7 @@ static utest::v1::status_t greentea_setup(const size_t number_of_cases) {
 }
 
 // List of test cases in this file
-static Case cases[] = { Case("test bike system", test_bike_system) };
+static Case cases[] = {Case("test bike system", test_bike_system)};
 
 static Specification specification(greentea_setup, cases);
 
