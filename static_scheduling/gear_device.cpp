@@ -44,23 +44,29 @@ GearDevice::GearDevice(Timer& timer) : _timer(timer) {}
 uint8_t GearDevice::getCurrentGear() {
     std::chrono::microseconds initialTime = _timer.elapsed_time();
     std::chrono::microseconds elapsedTime = std::chrono::microseconds::zero();
+    // we bound the change to one increment/decrement per call
+    bool hasChanged = false;
     while (elapsedTime < kTaskRunTime) {
-        disco::Joystick::State joystickState = disco::Joystick::getInstance().getState();
-        switch (joystickState) {
-            case disco::Joystick::State::UpPressed:
-                if (_currentGear < bike_computer::kMaxGear) {
-                    _currentGear++;
-                }
-                break;
+        if (! hasChanged) {
+            disco::Joystick::State joystickState = disco::Joystick::getInstance().getState();
+                switch (joystickState) {
+                case disco::Joystick::State::UpPressed:
+                    if (_currentGear < bike_computer::kMaxGear) {
+                        _currentGear++;
+                    }
+                    hasChanged = true;
+                    break;
 
-            case disco::Joystick::State::DownPressed:
-                if (_currentGear > bike_computer::kMinGear) {
-                    _currentGear--;
-                }
-                break;
+                case disco::Joystick::State::DownPressed:
+                    if (_currentGear > bike_computer::kMinGear) {
+                        _currentGear--;
+                    }
+                    hasChanged = true;
+                    break;
 
-            default:
-                break;
+                default:
+                    break;
+            }
         }
         elapsedTime = _timer.elapsed_time() - initialTime;
     }

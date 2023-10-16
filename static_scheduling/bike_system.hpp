@@ -44,8 +44,25 @@ class BikeSystem {
 
     // method called in main() for starting the system
     void start();
+    
+    // method called for stopping the system
+    void stop();
+
+#if defined(MBED_TEST_MODE)
+    const advembsof::TaskLogger& getTaskLogger();
+#endif  // defined(MBED_TEST_MODE)
 
    private:
+    // private methods
+    void gearTask(uint8_t& gear, uint8_t& gearSize);
+    void speedDistanceTask(uint8_t gearSize, float& speed, float& distance);
+    void temperatureTask(float& temperature);
+    void resetTask();
+    void displayTask1(uint8_t gear, float speed, float distance);
+    void displayTask2(float temperature);
+
+    // stop flag
+    bool _stopFlag = false;
     // timer instance used for loggint task time and used by ResetDevice
     Timer _timer;
     // data member that represents the device for manipulating the gear
@@ -61,7 +78,7 @@ class BikeSystem {
     bike_computer::Speedometer _speedometer;
     // data member that represents the sensor device
     bike_computer::SensorDevice _sensorDevice;
-
+  
     // used for logging task info
     advembsof::TaskLogger _taskLogger;
 };

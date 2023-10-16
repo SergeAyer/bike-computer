@@ -35,27 +35,33 @@
 namespace static_scheduling {
 
 // definition of task execution time
-static constexpr std::chrono::microseconds kTaskRunTime = 100000us;
+static constexpr std::chrono::microseconds kTaskRunTime = 200000us;
 
 PedalDevice::PedalDevice(Timer& timer) : _timer(timer) {}
 
 std::chrono::milliseconds PedalDevice::getCurrentRotationTime() {
     std::chrono::microseconds initialTime = _timer.elapsed_time();
     std::chrono::microseconds elapsedTime = std::chrono::microseconds::zero();
+    // we bound the change to one increment/decrement per call
+    bool hasChanged = false;
     while (elapsedTime < kTaskRunTime) {
-        // check whether rotation speed has been updated
-        disco::Joystick::State joystickState = disco::Joystick::getInstance().getState();
-        switch (joystickState) {
-            case disco::Joystick::State::RightPressed:
-                increaseRotationSpeed();
-                break;
+        if (! hasChanged) {
+            // check whether rotation speed has been updated
+            disco::Joystick::State joystickState = disco::Joystick::getInstance().getState();
+            switch (joystickState) {
+                case disco::Joystick::State::RightPressed:
+                    increaseRotationSpeed();
+                    hasChanged = true;
+                    break;
 
-            case disco::Joystick::State::LeftPressed:
-                decreaseRotationSpeed();
-                break;
+                case disco::Joystick::State::LeftPressed:
+                    decreaseRotationSpeed();
+                    hasChanged = true;
+                    break;
 
-            default:
-                break;
+                default:
+                    break;
+            }
         }
         elapsedTime = _timer.elapsed_time() - initialTime;
     }

@@ -103,15 +103,15 @@ static control_t test_gear_size(const size_t call_count) {
     timer.start();
 
     // create a speedometer instance
-    bike_system::Speedometer speedometer(timer);
+    bike_computer::Speedometer speedometer(timer);
 
     // get speedometer constant values (for this test)
     const auto traySize           = speedometer.getTraySize();
     const auto wheelCircumference = speedometer.getWheelCircumference();
     const auto pedalRotationTime  = speedometer.getCurrentPedalRotationTime();
 
-    for (uint8_t gearSize = bike_system::kMaxGearSize;
-         gearSize <= bike_system::kMaxGearSize;
+    for (uint8_t gearSize = bike_computer::kMaxGearSize;
+         gearSize <= bike_computer::kMaxGearSize;
          gearSize++) {
         // set the gear
         printf("Testing gear size %d\n", gearSize);
@@ -137,10 +137,10 @@ static control_t test_rotation_speed(const size_t call_count) {
     timer.start();
 
     // create a speedometer instance
-    bike_system::Speedometer speedometer(timer);
+    bike_computer::Speedometer speedometer(timer);
 
     // set the gear size
-    speedometer.setGearSize(bike_system::kMaxGearSize);
+    speedometer.setGearSize(bike_computer::kMaxGearSize);
 
     // get speedometer constant values
     const auto traySize           = speedometer.getTraySize();
@@ -149,9 +149,9 @@ static control_t test_rotation_speed(const size_t call_count) {
 
     // first test increasing rotation speed (decreasing rotation time)
     auto pedalRotationTime = speedometer.getCurrentPedalRotationTime();
-    while (pedalRotationTime > bike_system::kMinPedalRotationTime) {
+    while (pedalRotationTime > bike_computer::kMinPedalRotationTime) {
         // decrease the pedal rotation time
-        pedalRotationTime -= bike_system::kDeltaPedalRotationTime;
+        pedalRotationTime -= bike_computer::kDeltaPedalRotationTime;
         speedometer.setCurrentRotationTime(pedalRotationTime);
 
         // get the current speed
@@ -164,9 +164,9 @@ static control_t test_rotation_speed(const size_t call_count) {
 
     // second test decreasing rotation speed (increasing rotation time)
     pedalRotationTime = speedometer.getCurrentPedalRotationTime();
-    while (pedalRotationTime < bike_system::kMaxPedalRotationTime) {
+    while (pedalRotationTime < bike_computer::kMaxPedalRotationTime) {
         // increase the pedal rotation time
-        pedalRotationTime += bike_system::kDeltaPedalRotationTime;
+        pedalRotationTime += bike_computer::kDeltaPedalRotationTime;
         speedometer.setCurrentRotationTime(pedalRotationTime);
 
         // get the current speed
@@ -187,10 +187,10 @@ static control_t test_distance(const size_t call_count) {
     Timer timer;
 
     // create a speedometer instance
-    bike_system::Speedometer speedometer(timer);
+    bike_computer::Speedometer speedometer(timer);
 
     // set the gear size
-    speedometer.setGearSize(bike_system::kMaxGearSize);
+    speedometer.setGearSize(bike_computer::kMaxGearSize);
 
     // get speedometer constant values
     const auto traySize           = speedometer.getTraySize();
@@ -257,7 +257,7 @@ static control_t test_distance(const size_t call_count) {
     expectedDistance = speedometer.getDistance();
     for (uint8_t index = 0; index < nbrOfTravelTimes; index++) {
         // update the rotation speed
-        pedalRotationTime += bike_system::kDeltaPedalRotationTime;
+        pedalRotationTime += bike_computer::kDeltaPedalRotationTime;
         speedometer.setCurrentRotationTime(pedalRotationTime);
 
         // run for the travel time and get the distance
@@ -291,10 +291,10 @@ static control_t test_reset(const size_t call_count) {
     Timer timer;
 
     // create a speedometer instance
-    bike_system::Speedometer speedometer(timer);
+    bike_computer::Speedometer speedometer(timer);
 
     // set the gear size
-    speedometer.setGearSize(bike_system::kMinGearSize);
+    speedometer.setGearSize(bike_computer::kMinGearSize);
 
     // get speedometer constant values
     const auto traySize           = speedometer.getTraySize();
