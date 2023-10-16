@@ -24,13 +24,15 @@
 
 #pragma once
 
-// from advembsof_library
-#include "sensor_device.hpp"
-#include "speedometer.hpp"
+// from advembsof
+#include "display_device.hpp"
 #include "task_logger.hpp"
 
+// from common
+#include "sensor_device.hpp"
+#include "speedometer.hpp"
+
 // local
-#include "display_device.hpp"
 #include "gear_device.hpp"
 #include "pedal_device.hpp"
 #include "reset_device.hpp"
@@ -73,7 +75,7 @@ class BikeSystem {
     // data member that represents the device used for resetting
     ResetDevice _resetDevice;
     // data member that represents the device display
-    DisplayDevice _displayDevice;
+    advembsof::DisplayDevice _displayDevice;
     // data member that represents the device for counting wheel rotations
     bike_computer::Speedometer _speedometer;
     // data member that represents the sensor device
