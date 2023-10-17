@@ -22,7 +22,7 @@
  * @version 1.0.0
  ***************************************************************************/
 
-#include "static_scheduling/bike_system.hpp"
+#include "bike_system.hpp"
 
 #include <chrono>
 

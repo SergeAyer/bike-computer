@@ -22,7 +22,7 @@
  * @version 1.0.0
  ***************************************************************************/
 
-#include "static_scheduling/pedal_device.hpp"
+#include "pedal_device.hpp"
 
 // from disco_h747i/wrappers
 #include "joystick.hpp"

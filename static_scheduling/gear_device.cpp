@@ -22,7 +22,7 @@
  * @version 1.0.0
  ***************************************************************************/
 
-#include "static_scheduling/gear_device.hpp"
+#include "gear_device.hpp"
 
 // from disco_h747i/wrappers
 #include <chrono>
