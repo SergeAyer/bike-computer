@@ -31,7 +31,6 @@ namespace static_scheduling {
 
 class GearDevice {
    public:
-    // constructor used for simulating the device with a thread
     explicit GearDevice(Timer& timer);  // NOLINT(runtime/references)
 
     // make the class non copyable

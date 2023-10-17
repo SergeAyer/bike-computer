@@ -30,7 +30,6 @@ namespace static_scheduling {
 
 class ResetDevice {
    public:
-    // constructor
     explicit ResetDevice(Timer& timer);  // NOLINT(runtime/references)
 
     // make the class non copyable
@@ -41,7 +40,7 @@ class ResetDevice {
     bool checkReset();
 
     // for computing the response time
-    const std::chrono::microseconds& getFallTime();
+    std::chrono::microseconds getFallTime();
 
    private:
     // called when the button is pressed

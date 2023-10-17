@@ -31,7 +31,6 @@ namespace static_scheduling {
 
 class PedalDevice {
    public:
-    // constructor used for simulating the device with a thread
     explicit PedalDevice(Timer& timer);  // NOLINT(runtime/references)
 
     // make the class non copyable

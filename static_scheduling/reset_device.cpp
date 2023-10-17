@@ -41,7 +41,7 @@ ResetDevice::ResetDevice(Timer& timer) : _resetButton(PUSH_BUTTON), _timer(timer
 
 void ResetDevice::onFall() { _fallTime = _timer.elapsed_time(); }
 
-const std::chrono::microseconds& ResetDevice::getFallTime() { return _fallTime; }
+std::chrono::microseconds ResetDevice::getFallTime() { return _fallTime; }
 
 bool ResetDevice::checkReset() {
     bool reset                            = false;

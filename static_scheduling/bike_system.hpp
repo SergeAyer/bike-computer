@@ -69,7 +69,7 @@ class BikeSystem {
     void displayTask1(uint8_t gear, float speed, float distance);
     void displayTask2(float temperature);
 
-    // stop flag
+    // stop flag, used for stopping the super-loop (set in stop())
     bool _stopFlag = false;
     // timer instance used for loggint task time and used by ResetDevice
     Timer _timer;
