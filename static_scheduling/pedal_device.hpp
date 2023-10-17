@@ -34,6 +34,10 @@ class PedalDevice {
     // constructor used for simulating the device with a thread
     explicit PedalDevice(Timer& timer);  // NOLINT(runtime/references)
 
+    // make the class non copyable
+    PedalDevice(PedalDevice&)            = delete;
+    PedalDevice& operator=(PedalDevice&) = delete;
+
     // method called for updating the bike system
     std::chrono::milliseconds getCurrentRotationTime();
 
@@ -41,9 +45,6 @@ class PedalDevice {
     // private methods
     void increaseRotationSpeed();
     void decreaseRotationSpeed();
-
-    // methods
-    void read();
 
     // data members
     std::chrono::milliseconds _pedalRotationTime =

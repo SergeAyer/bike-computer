@@ -33,6 +33,10 @@ class ResetDevice {
     // constructor
     explicit ResetDevice(Timer& timer);  // NOLINT(runtime/references)
 
+    // make the class non copyable
+    ResetDevice(ResetDevice&)            = delete;
+    ResetDevice& operator=(ResetDevice&) = delete;
+
     // method called for checking the reset status
     bool checkReset();
 

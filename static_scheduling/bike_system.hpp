@@ -44,6 +44,10 @@ class BikeSystem {
     // constructor
     BikeSystem();
 
+    // make the class non copyable
+    BikeSystem(BikeSystem&)            = delete;
+    BikeSystem& operator=(BikeSystem&) = delete;
+
     // method called in main() for starting the system
     void start();
 
@@ -56,9 +60,11 @@ class BikeSystem {
 
    private:
     // private methods
-    void gearTask(uint8_t& gear, uint8_t& gearSize);
-    void speedDistanceTask(uint8_t gearSize, float& speed, float& distance);
-    void temperatureTask(float& temperature);
+    void gearTask(uint8_t& gear, uint8_t& gearSize);  // NOLINT(runtime/references)
+    void speedDistanceTask(uint8_t gearSize,
+                           float& speed,       // NOLINT(runtime/references)
+                           float& distance);   // NOLINT(runtime/references)
+    void temperatureTask(float& temperature);  // NOLINT(runtime/references)
     void resetTask();
     void displayTask1(uint8_t gear, float speed, float distance);
     void displayTask2(float temperature);
