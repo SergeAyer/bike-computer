@@ -152,7 +152,7 @@ void BikeSystem::resetTask() {
 
     if (_resetDevice.checkReset()) {
         std::chrono::microseconds responseTime =
-            _timer.elapsed_time() - _resetDevice.getFallTime();
+            _timer.elapsed_time() - _resetDevice.getPressTime();
         tr_info("Reset task: response time is %" PRIu64 " usecs", responseTime.count());
         _speedometer.reset();
     }

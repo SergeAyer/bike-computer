@@ -40,17 +40,17 @@ class ResetDevice {
     bool checkReset();
 
     // for computing the response time
-    std::chrono::microseconds getFallTime();
+    std::chrono::microseconds getPressTime();
 
    private:
     // called when the button is pressed
-    void onFall();
+    void onRise();
 
     // data members
     // instance representing the reset button
     InterruptIn _resetButton;
     Timer& _timer;
-    std::chrono::microseconds _fallTime;
+    std::chrono::microseconds _pressTime;
 };
 
 }  // namespace static_scheduling

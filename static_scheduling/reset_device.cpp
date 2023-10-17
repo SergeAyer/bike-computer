@@ -36,12 +36,12 @@ static constexpr std::chrono::microseconds kTaskRunTime = 100000us;
 
 ResetDevice::ResetDevice(Timer& timer) : _resetButton(PUSH_BUTTON), _timer(timer) {
     // register a callback for computing the response time
-    _resetButton.fall(callback(this, &ResetDevice::onFall));
+    _resetButton.rise(callback(this, &ResetDevice::onRise));
 }
 
-void ResetDevice::onFall() { _fallTime = _timer.elapsed_time(); }
+void ResetDevice::onRise() { _pressTime = _timer.elapsed_time(); }
 
-std::chrono::microseconds ResetDevice::getFallTime() { return _fallTime; }
+std::chrono::microseconds ResetDevice::getPressTime() { return _pressTime; }
 
 bool ResetDevice::checkReset() {
     bool reset                            = false;
