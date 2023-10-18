@@ -60,14 +60,13 @@ class BikeSystem {
 
    private:
     // private methods
-    void gearTask(uint8_t& gear, uint8_t& gearSize);  // NOLINT(runtime/references)
-    void speedDistanceTask(uint8_t gearSize,
-                           float& speed,       // NOLINT(runtime/references)
-                           float& distance);   // NOLINT(runtime/references)
-    void temperatureTask(float& temperature);  // NOLINT(runtime/references)
+    void init();
+    void gearTask();  
+    void speedDistanceTask(); 
+    void temperatureTask();
     void resetTask();
-    void displayTask1(uint8_t gear, float speed, float distance);
-    void displayTask2(float temperature);
+    void displayTask1();
+    void displayTask2();
 
     // stop flag, used for stopping the super-loop (set in stop())
     bool _stopFlag = false;
@@ -75,9 +74,13 @@ class BikeSystem {
     Timer _timer;
     // data member that represents the device for manipulating the gear
     GearDevice _gearDevice;
+    uint8_t _currentGear = bike_computer::kMinGear;
+    uint8_t _currentGearSize = bike_computer::kMinGearSize;
     // data member that represents the device for manipulating the pedal rotation
     // speed/time
     PedalDevice _pedalDevice;
+    float _currentSpeed = 0.0f;
+    float _traveledDistance = 0.0f;
     // data member that represents the device used for resetting
     ResetDevice _resetDevice;
     // data member that represents the device display
@@ -86,6 +89,7 @@ class BikeSystem {
     bike_computer::Speedometer _speedometer;
     // data member that represents the sensor device
     bike_computer::SensorDevice _sensorDevice;
+    float _currentTemperature = 0.0f;
 
     // used for logging task info
     advembsof::TaskLogger _taskLogger;
