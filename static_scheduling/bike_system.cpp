@@ -33,30 +33,32 @@
 
 namespace static_scheduling {
 
-static constexpr std::chrono::milliseconds kGearTaskPeriod = 800ms;
-static constexpr std::chrono::milliseconds kGearTaskDelay = 0ms;
-static constexpr std::chrono::milliseconds kGearTaskComputationTime = 100ms;
-static constexpr std::chrono::milliseconds kSpeedDistanceTaskPeriod = 400ms;
-static constexpr std::chrono::milliseconds kSpeedDistanceTaskDelay = 0ms;
+static constexpr std::chrono::milliseconds kGearTaskPeriod                   = 800ms;
+static constexpr std::chrono::milliseconds kGearTaskDelay                    = 0ms;
+static constexpr std::chrono::milliseconds kGearTaskComputationTime          = 100ms;
+static constexpr std::chrono::milliseconds kSpeedDistanceTaskPeriod          = 400ms;
+static constexpr std::chrono::milliseconds kSpeedDistanceTaskDelay           = 100ms;
 static constexpr std::chrono::milliseconds kSpeedDistanceTaskComputationTime = 200ms;
-static constexpr std::chrono::milliseconds kDisplayTask1Period = 1600ms;
-static constexpr std::chrono::milliseconds kDisplayTask1Delay = 300ms;
-static constexpr std::chrono::milliseconds kDisplayTask1ComputationTime    = 200ms;
-static constexpr std::chrono::milliseconds kResetTaskPeriod = 800ms;
-static constexpr std::chrono::milliseconds kResetTaskDelay = 700ms;
-static constexpr std::chrono::milliseconds kResetTaskComputationTime = 100ms;
-static constexpr std::chrono::milliseconds kTemperatureTaskPeriod = 1600ms;
-static constexpr std::chrono::milliseconds kTemperatureTaskDelay = 1100ms;
-static constexpr std::chrono::milliseconds kTemperatureTaskComputationTime = 100ms;
-static constexpr std::chrono::milliseconds kDisplayTask2Period = 1600ms;
-static constexpr std::chrono::milliseconds kDisplayTask2Delay = 1200ms;
-static constexpr std::chrono::milliseconds kDisplayTask2ComputationTime    = 100ms;
+static constexpr std::chrono::milliseconds kDisplayTask1Period               = 1600ms;
+static constexpr std::chrono::milliseconds kDisplayTask1Delay                = 300ms;
+static constexpr std::chrono::milliseconds kDisplayTask1ComputationTime      = 200ms;
+static constexpr std::chrono::milliseconds kResetTaskPeriod                  = 800ms;
+static constexpr std::chrono::milliseconds kResetTaskDelay                   = 700ms;
+static constexpr std::chrono::milliseconds kResetTaskComputationTime         = 100ms;
+static constexpr std::chrono::milliseconds kTemperatureTaskPeriod            = 1600ms;
+static constexpr std::chrono::milliseconds kTemperatureTaskDelay             = 1100ms;
+static constexpr std::chrono::milliseconds kTemperatureTaskComputationTime   = 100ms;
+static constexpr std::chrono::milliseconds kDisplayTask2Period               = 1600ms;
+static constexpr std::chrono::milliseconds kDisplayTask2Delay                = 1200ms;
+static constexpr std::chrono::milliseconds kDisplayTask2ComputationTime      = 100ms;
+static constexpr std::chrono::milliseconds kMajorCycleDuration               = 1600ms;
 
 BikeSystem::BikeSystem()
     : _gearDevice(_timer),
       _pedalDevice(_timer),
       _resetDevice(_timer),
-      _speedometer(_timer) {}
+      _speedometer(_timer),
+      _cpuLogger(_timer) {}
 
 void BikeSystem::start() {
     tr_info("Starting Super-Loop without event handling");
@@ -91,22 +93,25 @@ void BikeSystem::start() {
         if (stopFlag) {
             break;
         }
+
+        // _cpuLogger.printStats();
     }
 }
-/*
+
 void BikeSystem::startWithEventQueue() {
     tr_info("Starting Super-Loop without event handling (EventQueue)");
 
     init();
 
     EventQueue eventQueue;
-    
+
     Event<void()> gearEvent(&eventQueue, callback(this, &BikeSystem::gearTask));
     gearEvent.delay(kGearTaskDelay);
     gearEvent.period(kGearTaskPeriod);
     gearEvent.post();
-    
-    Event<void()> speedDistanceEvent(&eventQueue, callback(this, &BikeSystem::speedDistanceTask));
+
+    Event<void()> speedDistanceEvent(&eventQueue,
+                                     callback(this, &BikeSystem::speedDistanceTask));
     std::chrono::milliseconds taskDelay = kGearTaskComputationTime;
     speedDistanceEvent.delay(kSpeedDistanceTaskDelay);
     speedDistanceEvent.period(kSpeedDistanceTaskPeriod);
@@ -122,19 +127,26 @@ void BikeSystem::startWithEventQueue() {
     resetEvent.period(kResetTaskPeriod);
     resetEvent.post();
 
-    Event<void()> temperatureEvent(&eventQueue, callback(this, &BikeSystem::temperatureTask));
+    Event<void()> temperatureEvent(&eventQueue,
+                                   callback(this, &BikeSystem::temperatureTask));
     temperatureEvent.delay(kTemperatureTaskDelay);
     temperatureEvent.period(kTemperatureTaskPeriod);
     temperatureEvent.post();
-    
+
     Event<void()> display2Event(&eventQueue, callback(this, &BikeSystem::displayTask2));
     display2Event.delay(kDisplayTask2Delay);
     display2Event.period(kDisplayTask2Period);
     display2Event.post();
-    
+
+    Event<void()> cpuStatsEvent(&eventQueue,
+                                callback(&_cpuLogger, &advembsof::CPULogger::printStats));
+    cpuStatsEvent.delay(kMajorCycleDuration);
+    cpuStatsEvent.period(kMajorCycleDuration);
+    cpuStatsEvent.post();
+
     eventQueue.dispatch_forever();
 }
-*/
+
 void BikeSystem::stop() { core_util_atomic_store_bool(&_stopFlag, true); }
 
 #if defined(MBED_TEST_MODE)
@@ -159,7 +171,6 @@ void BikeSystem::init() {
 
     // enable/disable task logging
     _taskLogger.enable(true);
-
 }
 
 void BikeSystem::gearTask() {
@@ -182,7 +193,7 @@ void BikeSystem::speedDistanceTask() {
     _speedometer.setCurrentRotationTime(pedalRotationTime);
     _speedometer.setGearSize(_currentGearSize);
     // no need to protect access to data members (single threaded)
-    _currentSpeed    = _speedometer.getCurrentSpeed();
+    _currentSpeed     = _speedometer.getCurrentSpeed();
     _traveledDistance = _speedometer.getDistance();
 
     _taskLogger.logPeriodAndExecutionTime(
@@ -197,10 +208,14 @@ void BikeSystem::temperatureTask() {
 
     // simulate task computation by waiting for the required task computation time
 
-    std::chrono::microseconds elapsedTime = std::chrono::microseconds::zero();
-    while (elapsedTime < kTemperatureTaskComputationTime) {
-        elapsedTime = _timer.elapsed_time() - taskStartTime;
-    }
+    std::chrono::milliseconds elapsedTime =
+        std::chrono::duration_cast<std::chrono::milliseconds>(_timer.elapsed_time() -
+                                                              taskStartTime);
+    ThisThread::sleep_for(kTemperatureTaskComputationTime - elapsedTime);
+    // std::chrono::microseconds elapsedTime = std::chrono::microseconds::zero();
+    // while (elapsedTime < kTemperatureTaskComputationTime) {
+    //     elapsedTime = _timer.elapsed_time() - taskStartTime;
+    // }
 
     _taskLogger.logPeriodAndExecutionTime(
         _timer, advembsof::TaskLogger::kTemperatureTaskIndex, taskStartTime);
@@ -228,11 +243,15 @@ void BikeSystem::displayTask1() {
     _displayDevice.displayDistance(_traveledDistance);
 
     // simulate task computation by waiting for the required task computation time
-
+    std::chrono::milliseconds elapsedTime =
+        std::chrono::duration_cast<std::chrono::milliseconds>(_timer.elapsed_time() -
+                                                              taskStartTime);
+    ThisThread::sleep_for(kDisplayTask1ComputationTime - elapsedTime);
+    /*
     std::chrono::microseconds elapsedTime = std::chrono::microseconds::zero();
     while (elapsedTime < kDisplayTask1ComputationTime) {
         elapsedTime = _timer.elapsed_time() - taskStartTime;
-    }
+    }*/
 
     _taskLogger.logPeriodAndExecutionTime(
         _timer, advembsof::TaskLogger::kDisplayTask1Index, taskStartTime);
@@ -244,11 +263,15 @@ void BikeSystem::displayTask2() {
     _displayDevice.displayTemperature(_currentTemperature);
 
     // simulate task computation by waiting for the required task computation time
-
+    std::chrono::milliseconds elapsedTime =
+        std::chrono::duration_cast<std::chrono::milliseconds>(_timer.elapsed_time() -
+                                                              taskStartTime);
+    ThisThread::sleep_for(kDisplayTask2ComputationTime - elapsedTime);
+    /*
     std::chrono::microseconds elapsedTime = std::chrono::microseconds::zero();
     while (elapsedTime < kDisplayTask2ComputationTime) {
         elapsedTime = _timer.elapsed_time() - taskStartTime;
-    }
+    }*/
     _taskLogger.logPeriodAndExecutionTime(
         _timer, advembsof::TaskLogger::kDisplayTask2Index, taskStartTime);
 }
