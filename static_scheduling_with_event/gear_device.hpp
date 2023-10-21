@@ -13,10 +13,10 @@
 // limitations under the License.
 
 /****************************************************************************
- * @file reset_device.hpp
+ * @file gear_device.hpp
  * @author Serge Ayer <serge.ayer@hefr.ch>
  *
- * @brief ResetDevice header file (static scheduling)
+ * @brief Gear Device header file (static scheduling)
  *
  * @date 2023-08-20
  * @version 1.0.0
@@ -24,23 +24,30 @@
 
 #pragma once
 
+#include "constants.hpp"
 #include "mbed.h"
 
 namespace static_scheduling_with_event {
 
-class ResetDevice {
+class GearDevice {
    public:
-    // constructor
-    explicit ResetDevice(Callback<void()> cb);  // NOLINT(runtime/references)
+    GearDevice();
 
     // make the class non copyable
-    ResetDevice(ResetDevice&)            = delete;
-    ResetDevice& operator=(ResetDevice&) = delete;
+    GearDevice(GearDevice&)            = delete;
+    GearDevice& operator=(GearDevice&) = delete;
+
+    // method called for updating the bike system
+    uint8_t getCurrentGear();
+    uint8_t getCurrentGearSize() const;
 
    private:
+    // private methods
+    void onUp();
+    void onDown();
+
     // data members
-    // instance representing the reset button
-    InterruptIn _resetButton;
+    volatile uint8_t _currentGear = bike_computer::kMinGear;
 };
 
 }  // namespace static_scheduling_with_event

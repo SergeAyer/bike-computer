@@ -13,10 +13,10 @@
 // limitations under the License.
 
 /****************************************************************************
- * @file reset_device.hpp
+ * @file pedal_device.hpp
  * @author Serge Ayer <serge.ayer@hefr.ch>
  *
- * @brief ResetDevice header file (static scheduling)
+ * @brief Pedal System header file (static scheduling)
  *
  * @date 2023-08-20
  * @version 1.0.0
@@ -24,23 +24,40 @@
 
 #pragma once
 
+#include <mstd_mutex>
+
+#include "constants.hpp"
 #include "mbed.h"
 
 namespace static_scheduling_with_event {
 
-class ResetDevice {
+class PedalDevice {
    public:
-    // constructor
-    explicit ResetDevice(Callback<void()> cb);  // NOLINT(runtime/references)
+    PedalDevice();
 
     // make the class non copyable
-    ResetDevice(ResetDevice&)            = delete;
-    ResetDevice& operator=(ResetDevice&) = delete;
+    PedalDevice(PedalDevice&)            = delete;
+    PedalDevice& operator=(PedalDevice&) = delete;
+
+    // method called for updating the bike system
+    std::chrono::milliseconds getCurrentRotationTime();
 
    private:
+    // private methods
+    void onLeft();
+    void onRight();
+    void increaseRotationSpeed();
+    void decreaseRotationSpeed();
+
     // data members
-    // instance representing the reset button
-    InterruptIn _resetButton;
+    static constexpr uint32_t kNbrOfSteps = static_cast<uint32_t>(
+        (bike_computer::kMaxPedalRotationTime - bike_computer::kMinPedalRotationTime)
+            .count() /
+        bike_computer::kDeltaPedalRotationTime.count());
+    volatile uint32_t _currentStep = static_cast<uint32_t>(
+        (bike_computer::kInitialPedalRotationTime - bike_computer::kMinPedalRotationTime)
+            .count() /
+        bike_computer::kDeltaPedalRotationTime.count());
 };
 
 }  // namespace static_scheduling_with_event
