@@ -59,8 +59,6 @@ BikeSystem::BikeSystem()
       _cpuLogger(_timer) {}
 
 void BikeSystem::start() {
-    tr_info("Starting Super-Loop with no event handling");
-
     tr_info("Starting Super-Loop without event handling (EventQueue)");
 
     init();
@@ -74,7 +72,6 @@ void BikeSystem::start() {
 
     Event<void()> speedDistanceEvent(&eventQueue,
                                      callback(this, &BikeSystem::speedDistanceTask));
-    std::chrono::milliseconds taskDelay = kGearTaskComputationTime;
     speedDistanceEvent.delay(kSpeedDistanceTaskDelay);
     speedDistanceEvent.period(kSpeedDistanceTaskPeriod);
     speedDistanceEvent.post();

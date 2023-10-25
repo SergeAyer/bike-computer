@@ -27,11 +27,11 @@ repos:
 #  hooks:
 #  -   id: cppcheck
 #      entry: cppcheck --enable=all --suppress=missingInclude:* --inline-suppr -i mbed-os --error-exitcode=1
-#- repo: local
+- repo: local
   hooks:
   -   id: cppcheck
       name: cppcheck
-      files: ^(TESTS/bike-computer)|^(common)|^(static_scheduling)|(main.cpp)
+      require_serial: true
       entry: cppcheck --enable=all --suppress=missingInclude:* --inline-suppr -i mbed-os --std=c++14 --error-exitcode=1 -v
       language: system
 

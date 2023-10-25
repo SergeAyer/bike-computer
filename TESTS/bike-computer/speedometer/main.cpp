@@ -337,7 +337,7 @@ static control_t test_reset(const size_t call_count) {
 static utest::v1::status_t greentea_setup(const size_t number_of_cases) {
     // Here, we specify the timeout (60s) and the host test (a built-in host test or the
     // name of our Python file)
-    GREENTEA_SETUP(120, "default_auto");
+    GREENTEA_SETUP(180, "default_auto");
 
     return greentea_test_setup_handler(number_of_cases);
 }

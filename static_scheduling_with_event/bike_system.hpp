@@ -34,8 +34,6 @@
 #include "speedometer.hpp"
 
 // local
-#include <chrono>
-
 #include "gear_device.hpp"
 #include "pedal_device.hpp"
 #include "reset_device.hpp"

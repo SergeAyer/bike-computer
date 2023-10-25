@@ -112,7 +112,6 @@ void BikeSystem::startWithEventQueue() {
 
     Event<void()> speedDistanceEvent(&eventQueue,
                                      callback(this, &BikeSystem::speedDistanceTask));
-    std::chrono::milliseconds taskDelay = kGearTaskComputationTime;
     speedDistanceEvent.delay(kSpeedDistanceTaskDelay);
     speedDistanceEvent.period(kSpeedDistanceTaskPeriod);
     speedDistanceEvent.post();
