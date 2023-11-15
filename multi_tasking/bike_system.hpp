@@ -16,19 +16,28 @@
  * @file bike_system.hpp
  * @author Serge Ayer <serge.ayer@hefr.ch>
  *
- * @brief Bike System header file
+ * @brief Bike System header file (multi-tasking)
  *
- * @date 2022-07-05
- * @version 0.1.0
+ * @date 2023-08-20
+ * @version 1.0.0
  ***************************************************************************/
 
 #pragma once
 
-#include "bike_display.hpp"
-#include "gear_system_device.hpp"
+// from advembsof
+#include "cpu_logger.hpp"
+#include "display_device.hpp"
 #include "memory_logger.hpp"
+#include "task_logger.hpp"
+
+// from common
+#include "sensor_device.hpp"
+#include "speedometer.hpp"
+
+// local
+#include "gear_device.hpp"
+#include "pedal_device.hpp"
 #include "reset_device.hpp"
-#include "wheel_counter_device.hpp"
 
 namespace multi_tasking {
 
@@ -37,45 +46,66 @@ class BikeSystem {
     // constructor
     BikeSystem();
 
+    // make the class non copyable
+    BikeSystem(BikeSystem&)            = delete;
+    BikeSystem& operator=(BikeSystem&) = delete;
+
     // method called in main() for starting the system
     void start();
 
+    // method called for stopping the system
+    void stop();
+
+#if defined(MBED_TEST_MODE)
+    const advembsof::TaskLogger& getTaskLogger();
+#endif  // defined(MBED_TEST_MODE)
+
    private:
     // private methods
-    void setNewGear(uint8_t newGear);
-    void updateCurrentGear(uint8_t newGear);
-    void performReset();
-    void processData();
+    void init();
+    void onReset();
+    void onGearChanged(uint8_t currentGear, uint8_t currentGearSize);
+    void onRotationSpeedChanged(const std::chrono::milliseconds& pedalRotationTime);
+    void temperatureTask();
+    void resetTask();
+    void displayTask();
 
-    // called as reset handler
-    void setReset();
-    std::chrono::microseconds _resetTime;
-
-    // memory logger
-    MemoryLogger _memoryLogger;
-
-    // data members used for exchanging information among threads
-    CountQueue _countQueue;
-    ProcessedMail _processedMail;
-
-    // thread used for processing data
-    Thread _processingThread;
-
+    // EventQueue used by the thread calling start()
+    EventQueue _eventQueue;
     // EventQueue used for serving deferred ISRs
     EventQueue _eventQueueForISRs;
+    Thread _deferredISRThread;
 
+    // stop flag, used for stopping the super-loop (set in stop())
+    bool _stopFlag = false;
+    // used for computing the reset response time
+    std::chrono::microseconds _resetTime = std::chrono::microseconds::zero();
     // timer instance used for loggint task time and used by ResetDevice
     Timer _timer;
     // data member that represents the device for manipulating the gear
-    GearSystemDevice _gearSystemDevice;
-    // data member that represents the device for counting wheel rotations
-    WheelCounterDevice _wheelCounterDevice;
+    GearDevice _gearDevice;
+    uint8_t _currentGear = bike_computer::kMinGear;
+    // data member that represents the device for manipulating the pedal rotation
+    // speed/time
+    PedalDevice _pedalDevice;
     // data member that represents the device used for resetting
     ResetDevice _resetDevice;
     // data member that represents the device display
-    BikeDisplay _bikeDisplay;
-    // total rotation count
-    volatile uint32_t _totalRotationCount = 0;
+    advembsof::DisplayDevice _displayDevice;
+    // data member that represents the device for counting wheel rotations
+    bike_computer::Speedometer _speedometer;
+    // data member that represents the sensor device
+    bike_computer::SensorDevice _sensorDevice;
+    float _currentTemperature = 0.0f;
+
+    // used for logging task info
+    advembsof::TaskLogger _taskLogger;
+
+    // used for logging cpu usage
+    advembsof::CPULogger _cpuLogger;
+
+    // used for logging thread and memory usage
+    advembsof::MemoryLogger _memoryLogger;
 };
 
 }  // namespace multi_tasking

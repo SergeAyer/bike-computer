@@ -13,39 +13,41 @@
 // limitations under the License.
 
 /****************************************************************************
- * @file wheel_counter_device.cpp
+ * @file gear_device.hpp
  * @author Serge Ayer <serge.ayer@hefr.ch>
  *
- * @brief Wheel counter device implementation
+ * @brief Gear Device header file (multi-tasking)
  *
- * @date 2022-07-05
- * @version 0.1.0
+ * @date 2023-08-20
+ * @version 1.0.0
  ***************************************************************************/
 
-#include "multi_tasking/wheel_counter_device.hpp"
+#pragma once
+
+#include "constants.hpp"
+#include "mbed.h"
 
 namespace multi_tasking {
-    
-static constexpr std::chrono::milliseconds kWheelRotationTime = 200ms;
 
-WheelCounterDevice::WheelCounterDevice(CountQueue& countQueue)
-    : _countQueue(countQueue) {}
+class GearDevice {
+   public:
+    GearDevice(EventQueue& eventQueue, mbed::Callback<void(uint8_t, uint8_t)> cb);
 
-void WheelCounterDevice::start() {
-    // start a ticker for signaling a wheel rotation
-    _ticker.attach(callback(this, &WheelCounterDevice::turn), kWheelRotationTime);
-}
+    // make the class non copyable
+    GearDevice(GearDevice&)            = delete;
+    GearDevice& operator=(GearDevice&) = delete;
 
-void WheelCounterDevice::turn() {
-    // ISR context
-    // increment rotation count
-    _rotationCount++;
-    // try to push the data to the queue, if successful reset the rotation count
-    if (_rotationCount > kNbrOfRotationsForPut &&
-        // NOLINTNEXTLINE(readability/casting)
-        _countQueue.try_put((uint32_t*)_rotationCount)) {
-        _rotationCount = 0;
-    }
-}
+   private:
+    // private methods
+    void onUp();
+    void onDown();
+    void postEvent();
+
+    // data members
+    volatile uint8_t _currentGear = bike_computer::kMinGear;
+    // reference to EventQueue used for posting events upon gear change
+    EventQueue& _eventQueue;
+    mbed::Callback<void(uint8_t, uint8_t)> _cb;
+};
 
 }  // namespace multi_tasking

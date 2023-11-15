@@ -16,10 +16,10 @@
  * @file reset_device.hpp
  * @author Serge Ayer <serge.ayer@hefr.ch>
  *
- * @brief Reset device header file
+ * @brief ResetDevice header file (multi_tasking)
  *
- * @date 2022-07-05
- * @version 0.1.0
+ * @date 2023-08-20
+ * @version 1.0.0
  ***************************************************************************/
 
 #pragma once
@@ -30,9 +30,12 @@ namespace multi_tasking {
 
 class ResetDevice {
    public:
-    // constructor used for event-driven behavior
-    using ResetDeviceCallback = mbed::Callback<void()>;
-    explicit ResetDevice(ResetDeviceCallback cb);
+    // constructor
+    explicit ResetDevice(Callback<void()> cb);  // NOLINT(runtime/references)
+
+    // make the class non copyable
+    ResetDevice(ResetDevice&)            = delete;
+    ResetDevice& operator=(ResetDevice&) = delete;
 
    private:
     // data members

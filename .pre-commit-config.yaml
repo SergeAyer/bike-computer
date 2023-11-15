@@ -1,4 +1,4 @@
-files: ^(static_scheduling)|^(common)|^(TESTS/bike-computer)|^(main.cpp)
+files: ^(static_scheduling)|^(multi_tasking)|^(common)|^(TESTS)|^(main.cpp)
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v4.3.0

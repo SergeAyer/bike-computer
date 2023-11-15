@@ -16,23 +16,22 @@
  * @file reset_device.cpp
  * @author Serge Ayer <serge.ayer@hefr.ch>
  *
- * @brief Reset device implementation
+ * @brief ResetDevice implementation (multi-tasking)
  *
- * @date 2022-07-05
- * @version 0.1.0
+ * @date 2023-08-20
+ * @version 1.0.0
  ***************************************************************************/
 
-#include "multi_tasking/reset_device.hpp"
+#include "reset_device.hpp"
 
-#if defined(TARGET_DISCO_L475VG_IOT01A) || defined(TARGET_DISCO_F746NG) || \
-    defined(TARGET_DISCO_H747I)
+#if defined(TARGET_DISCO_H747I)
 #define PUSH_BUTTON BUTTON1
-#define POLARITY_PRESSED 0
+static constexpr uint8_t kPolarityPressed = 1;
 #endif
 
 namespace multi_tasking {
 
-ResetDevice::ResetDevice(ResetDeviceCallback cb) : _resetButton(PUSH_BUTTON) {
+ResetDevice::ResetDevice(Callback<void()> cb) : _resetButton(PUSH_BUTTON) {
     // register a callback for computing the response time
     _resetButton.fall(cb);
 }

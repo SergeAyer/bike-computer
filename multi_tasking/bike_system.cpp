@@ -16,13 +16,15 @@
  * @file bike_system.cpp
  * @author Serge Ayer <serge.ayer@hefr.ch>
  *
- * @brief Bike System implementation
+ * @brief Bike System implementation (multi-tasking)
  *
- * @date 2022-07-05
- * @version 0.1.0
+ * @date 2023-08-20
+ * @version 1.0.0
  ***************************************************************************/
 
-#include "multi_tasking/bike_system.hpp"
+#include "bike_system.hpp"
+
+#include <chrono>
 
 #include "mbed_trace.h"
 #if MBED_CONF_MBED_TRACE_ENABLE
@@ -31,156 +33,127 @@
 
 namespace multi_tasking {
 
+static constexpr std::chrono::milliseconds kDisplayTaskPeriod              = 1600ms;
+static constexpr std::chrono::milliseconds kDisplayTaskDelay               = 300ms;
+static constexpr std::chrono::milliseconds kDisplayTaskComputationTime     = 200ms;
+static constexpr std::chrono::milliseconds kTemperatureTaskPeriod          = 1600ms;
+static constexpr std::chrono::milliseconds kTemperatureTaskDelay           = 1100ms;
+static constexpr std::chrono::milliseconds kTemperatureTaskComputationTime = 100ms;
+static constexpr std::chrono::milliseconds kMajorCycleDuration             = 1600ms;
+
 BikeSystem::BikeSystem()
-    : _processingThread(osPriorityNormal, OS_STACK_SIZE, nullptr, "ProcessingThread"),
-      _gearSystemDevice(callback(this, &BikeSystem::setNewGear)),
-      _wheelCounterDevice(_countQueue),
-      _resetDevice(callback(this, &BikeSystem::setReset)),
-      _bikeDisplay(_processedMail) {}
+    : _gearDevice(_eventQueue, callback(this, &BikeSystem::onGearChanged)),
+      _pedalDevice(_eventQueue, callback(this, &BikeSystem::onRotationSpeedChanged)),
+      _resetDevice(callback(this, &BikeSystem::onReset)),
+      _deferredISRThread(
+          osPriorityAboveNormal, OS_STACK_SIZE, nullptr, "deferredISRThread"),
+      _speedometer(_timer),
+      _cpuLogger(_timer) {}
 
 void BikeSystem::start() {
-    tr_info("Starting multi-tasking bike system (update 2)");
+    tr_info("Starting Multi-tasking BikeComputer");
 
+    init();
+
+    Event<void()> displayEvent(&_eventQueue, callback(this, &BikeSystem::displayTask));
+    displayEvent.delay(kDisplayTaskDelay);
+    displayEvent.period(kDisplayTaskPeriod);
+    displayEvent.post();
+
+    Event<void()> temperatureEvent(&_eventQueue,
+                                   callback(this, &BikeSystem::temperatureTask));
+    temperatureEvent.delay(kTemperatureTaskDelay);
+    temperatureEvent.period(kTemperatureTaskPeriod);
+    temperatureEvent.post();
+
+#if !defined(MBED_TEST_MODE)
+    Event<void()> cpuStatsEvent(&_eventQueue,
+                                callback(&_cpuLogger, &advembsof::CPULogger::printStats));
+    cpuStatsEvent.delay(kMajorCycleDuration);
+    cpuStatsEvent.period(kMajorCycleDuration);
+    cpuStatsEvent.post();
+#endif
+
+    // start the thread for serving deferred ISRs
+    _deferredISRThread.start(
+        callback(&_eventQueueForISRs, &EventQueue::dispatch_forever));
+
+    // print thread statistics
+    _memoryLogger.getAndPrintThreadStatistics();
+
+    _eventQueue.dispatch_forever();
+}
+
+void BikeSystem::stop() { core_util_atomic_store_bool(&_stopFlag, true); }
+
+#if defined(MBED_TEST_MODE)
+const advembsof::TaskLogger& BikeSystem::getTaskLogger() { return _taskLogger; }
+#endif  // defined(MBED_TEST_MODE)
+
+void BikeSystem::init() {
     // start the timer
     _timer.start();
 
-    // the wheel counter and lcd display must be started
-    // the reset and gear system device are event-based
-
-    // start the wheel counter device
-    _wheelCounterDevice.start();
-
-    // start the processing thread
-    _processingThread.start(callback(this, &BikeSystem::processData));
-
-    // start the lcd display
-    _bikeDisplay.start();
-
-    tr_debug("Bike system started");
-
-#if defined(USE_MEMORY_LOGGER)
-    // log memory state
-    _memoryLogger.getAndPrintStatistics();
-    _memoryLogger.printRuntimeMemoryMap();
-#endif
-
-    // dispatch event on the ISR queue forever (will not return)
-    _eventQueueForISRs.dispatch_forever();
-}
-
-void BikeSystem::setNewGear(uint8_t newGear) {
-    // defer the job to the event queue
-    _eventQueueForISRs.call(mbed::callback(this, &BikeSystem::updateCurrentGear),
-                            newGear);
-}
-
-void BikeSystem::updateCurrentGear(uint8_t newGear) {
-    // get the new gear
-    //tr_debug("New gear is %d mmh", newGear);
-    _bikeDisplay.displayGear(newGear);
-}
-
-void BikeSystem::performReset() {
-    tr_info("Reset task: response time is %" PRIu64 " usecs",
-            _timer.elapsed_time().count() - _resetTime.count());
-
-    core_util_atomic_store_u32(&_totalRotationCount, 0);
-}
-
-void BikeSystem::setReset() {
-    _resetTime = _timer.elapsed_time();
-
-    // defer the job to the event queue
-    _eventQueueForISRs.call(mbed::callback(this, &BikeSystem::performReset));
-}
-
-void BikeSystem::processData() {
-    // get the start time before entering the loop
-    std::chrono::microseconds startTime;
-
-#if defined(MEMORY_FRAGMENTER)
-    MemoryFragmenter memoryFragmenter;
-    memoryFragmenter.fragmentMemory();
-#endif
-
-#if defined(STACK_OVERFLOW)
-    MemoryStackOverflow memoryStackOverflow;
-    static constexpr uint32_t kArraySize = 40;
-    double doubleArray[kArraySize]       = {0};
-    uint32_t multiplier                  = 1;
-#endif
-
-    // process data forever
-    while (true) {
-#if defined(MEMORY_LEAK)
-        // create a memory leak
-        MemoryLeak memLeak;
-        memLeak.use();
-        _memoryLogger.printDiffs();
-#endif
-
-#if defined(STACK_OVERFLOW)
-        memoryStackOverflow.allocateOnStack();
-        // allocate an array with growing size until it does not fit on the stack anymore
-        uint32_t allocSize = kArraySize * multiplier;
-        // Create a variable-size object on the stack
-        double anotherArray[allocSize];  // NOLINT(runtime/arrays)
-        for (size_t ix = 0; ix < allocSize; ix++) {
-            anotherArray[ix] = ix;
-        }
-        // copy to member variable to prevent them from being optimized away
-        for (int i = 0; i < kArraySize; i++) {
-            doubleArray[i] += anotherArray[i];
-        }
-        multiplier++;
-#endif
-
-        // get the rotation count
-        uint32_t rotationCount = 0;
-        // NOLINTNEXTLINE(readability/casting)
-        _countQueue.try_get_for(Kernel::wait_for_u32_forever, (uint32_t**)&rotationCount);
-
-        // at first rotation (upon reset), get the start time and wait for next rotation
-        if (_totalRotationCount == 0) {
-            startTime = _timer.elapsed_time();
-
-            // update the rotation count
-            _totalRotationCount += rotationCount;
-        } else {
-            // get the elapsed time since last rotation count reset
-            std::chrono::microseconds currentTime               = _timer.elapsed_time();
-            std::chrono::microseconds elapsedTimeSinceLastReset = currentTime - startTime;
-
-            // update the rotation count
-            _totalRotationCount += rotationCount;
-
-            // compute distance in m
-            uint64_t distance =
-                WheelCounterDevice::kWheelCircumference * _totalRotationCount;
-
-            // compute time in seconds
-            std::chrono::duration<double> elapsedTimeInSecs = elapsedTimeSinceLastReset;
-
-            // compute average rotation rate in rotation/sec
-            float averageRotationRate = _totalRotationCount / elapsedTimeInSecs.count();
-
-            // compute average speed in km/h
-            // m/s -> km/h (x 3600/1000)
-            float averageSpeed =
-                (distance * 3600.0) / (elapsedTimeInSecs.count() * 1000.0);
-
-            // push the new processed data
-            ProcessedData* pProcessedData =
-                _processedMail.try_alloc_for(Kernel::wait_for_u32_forever);
-            pProcessedData->averageSpeed        = averageSpeed;
-            pProcessedData->averageRotationRate = averageRotationRate;
-            _processedMail.put(pProcessedData);
-
-            // log memory stats
-#if defined(USE_MEMORY_LOGGER)
-            _memoryLogger.printDiffs();
-#endif
-        }
+    // initialize the lcd display
+    disco::ReturnCode rc = _displayDevice.init();
+    if (rc != disco::ReturnCode::Ok) {
+        tr_error("Failed to initialized the lcd display: %d", static_cast<int>(rc));
     }
+
+    // initialize the sensor device
+    bool present = _sensorDevice.init();
+    if (!present) {
+        tr_error("Sensor not present or initialization failed");
+    }
+
+    // enable/disable task logging
+    _taskLogger.enable(true);
 }
+
+void BikeSystem::onReset() {
+    _resetTime = _timer.elapsed_time();
+    _eventQueueForISRs.call(callback(this, &BikeSystem::resetTask));
+}
+
+void BikeSystem::onGearChanged(uint8_t currentGear, uint8_t currentGearSize) {
+    tr_debug("onGearChanged");
+    _currentGear = currentGear;
+    _speedometer.setGearSize(currentGearSize);
+}
+
+void BikeSystem::onRotationSpeedChanged(
+    const std::chrono::milliseconds& pedalRotationTime) {
+    _speedometer.setCurrentRotationTime(pedalRotationTime);
+}
+
+void BikeSystem::temperatureTask() {
+    auto taskStartTime = _timer.elapsed_time();
+
+    _currentTemperature = _sensorDevice.readTemperature();
+
+    _taskLogger.logPeriodAndExecutionTime(
+        _timer, advembsof::TaskLogger::kTemperatureTaskIndex, taskStartTime);
+}
+
+void BikeSystem::resetTask() {
+    tr_info("Reset task: response time is %" PRIu64 " usecs",
+            (_timer.elapsed_time() - _resetTime).count());
+    _speedometer.reset();
+}
+
+void BikeSystem::displayTask() {
+    auto taskStartTime = _timer.elapsed_time();
+
+    auto currentSpeed     = _speedometer.getCurrentSpeed();
+    auto traveledDistance = _speedometer.getDistance();
+
+    _displayDevice.displayGear(_currentGear);
+    _displayDevice.displaySpeed(currentSpeed);
+    _displayDevice.displayDistance(traveledDistance);
+    _displayDevice.displayTemperature(_currentTemperature);
+
+    _taskLogger.logPeriodAndExecutionTime(
+        _timer, advembsof::TaskLogger::kDisplayTask1Index, taskStartTime);
+}
+
 }  // namespace multi_tasking

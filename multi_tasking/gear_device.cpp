@@ -13,51 +13,53 @@
 // limitations under the License.
 
 /****************************************************************************
- * @file gear_system_device.cpp
+ * @file gear_device.cpp
  * @author Serge Ayer <serge.ayer@hefr.ch>
  *
- * @brief Gear system device implementation
+ * @brief Gear Device implementation (multi-tasking)
  *
- * @date 2022-07-05
- * @version 0.1.0
+ * @date 2023-08-20
+ * @version 1.0.0
  ***************************************************************************/
 
-#include "multi_tasking/gear_system_device.hpp"
+#include "gear_device.hpp"
 
+// from disco_h747i/wrappers
+#include <chrono>
+
+#include "joystick.hpp"
 #include "mbed_trace.h"
 
 #if MBED_CONF_MBED_TRACE_ENABLE
-#define TRACE_GROUP "GearSystemDevice"
+#define TRACE_GROUP "GearDevice"
 #endif  // MBED_CONF_MBED_TRACE_ENABLE
 
 namespace multi_tasking {
 
-GearSystemDevice::GearSystemDevice(GearSystemCallback cb) {
-    disco::Joystick::getInstance().setSelCallback(
-        callback(this, &GearSystemDevice::onJoystickUp));
-    disco::Joystick::getInstance().setDownCallback(
-        callback(this, &GearSystemDevice::onJoystickDown));
-    _callback = cb;
-    //tr_debug("Callback set");
+GearDevice::GearDevice(EventQueue& eventQueue, mbed::Callback<void(uint8_t, uint8_t)> cb)
+    : _eventQueue(eventQueue), _cb(cb) {
+    disco::Joystick::getInstance().setUpCallback(callback(this, &GearDevice::onUp));
+    disco::Joystick::getInstance().setDownCallback(callback(this, &GearDevice::onDown));
+    postEvent();
 }
 
-void GearSystemDevice::onJoystickUp() {
-    if (_currentGear < kMaxNbrOfGears) {
+void GearDevice::onUp() {
+    if (_currentGear < bike_computer::kMaxGear) {
         _currentGear++;
-        if (_callback != nullptr) {
-            _callback(_currentGear);
-        }
+        postEvent();
     }
 }
 
-void GearSystemDevice::onJoystickDown() {
-    if (_currentGear > kMinGear) {
+void GearDevice::onDown() {
+    if (_currentGear > bike_computer::kMinGear) {
         _currentGear--;
-        if (_callback != nullptr) {
-            _callback(_currentGear);
-        }
+        postEvent();
     }
 }
 
+void GearDevice::postEvent() {
+    Event<void(uint8_t, uint8_t)> newGearEvent(&_eventQueue, _cb);
+    newGearEvent.post(_currentGear, bike_computer::kMaxGearSize - _currentGear);
+}
 
 }  // namespace multi_tasking
