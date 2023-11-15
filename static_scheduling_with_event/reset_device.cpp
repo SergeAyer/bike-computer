@@ -33,7 +33,7 @@ namespace static_scheduling_with_event {
 
 ResetDevice::ResetDevice(Callback<void()> cb) : _resetButton(PUSH_BUTTON) {
     // register a callback for computing the response time
-    _resetButton.fall(cb);
+    _resetButton.rise(cb);
 }
 
 }  // namespace static_scheduling_with_event

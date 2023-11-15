@@ -59,7 +59,7 @@ BikeSystem::BikeSystem()
       _cpuLogger(_timer) {}
 
 void BikeSystem::start() {
-    tr_info("Starting Super-Loop without event handling (EventQueue)");
+    tr_info("Starting EventQueue with event handling");
 
     init();
 
@@ -97,11 +97,13 @@ void BikeSystem::start() {
     display2Event.period(kDisplayTask2Period);
     display2Event.post();
 
+#if !defined(MBED_TEST_MODE)
     Event<void()> cpuStatsEvent(&eventQueue,
                                 callback(&_cpuLogger, &advembsof::CPULogger::printStats));
     cpuStatsEvent.delay(kMajorCycleDuration);
     cpuStatsEvent.period(kMajorCycleDuration);
     cpuStatsEvent.post();
+#endif
 
     eventQueue.dispatch_forever();
 }

@@ -94,12 +94,14 @@ void BikeSystem::start() {
             break;
         }
 
-        // _cpuLogger.printStats();
+#if !defined(MBED_TEST_MODE)
+        _cpuLogger.printStats();
+#endif
     }
 }
 
 void BikeSystem::startWithEventQueue() {
-    tr_info("Starting Super-Loop without event handling (EventQueue)");
+    tr_info("Starting EventQueue without event handling");
 
     init();
 
@@ -137,11 +139,13 @@ void BikeSystem::startWithEventQueue() {
     display2Event.period(kDisplayTask2Period);
     display2Event.post();
 
+#if !defined(MBED_TEST_MODE)
     Event<void()> cpuStatsEvent(&eventQueue,
                                 callback(&_cpuLogger, &advembsof::CPULogger::printStats));
     cpuStatsEvent.delay(kMajorCycleDuration);
     cpuStatsEvent.period(kMajorCycleDuration);
     cpuStatsEvent.post();
+#endif
 
     eventQueue.dispatch_forever();
 }

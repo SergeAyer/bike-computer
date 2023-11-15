@@ -50,7 +50,7 @@ void GearDevice::onUp() {
 }
 
 void GearDevice::onDown() {
-    if (_currentGear < bike_computer::kMaxGear) {
+    if (_currentGear > bike_computer::kMinGear) {
         core_util_atomic_decr_u8(&_currentGear, 1);
     }
 }
