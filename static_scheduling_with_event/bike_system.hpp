@@ -70,8 +70,8 @@ class BikeSystem {
     void displayTask1();
     void displayTask2();
 
-    // stop flag, used for stopping the super-loop (set in stop())
-    bool _stopFlag = false;
+    // EventQueue used by the thread calling start()
+    EventQueue _eventQueue;
     // used for computing the reset response time
     std::chrono::microseconds _resetTime = std::chrono::microseconds::zero();
     // reset flag (set in onReset)

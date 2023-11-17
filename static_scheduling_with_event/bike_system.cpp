@@ -63,52 +63,50 @@ void BikeSystem::start() {
 
     init();
 
-    EventQueue eventQueue;
-
-    Event<void()> gearEvent(&eventQueue, callback(this, &BikeSystem::gearTask));
+    Event<void()> gearEvent(&_eventQueue, callback(this, &BikeSystem::gearTask));
     gearEvent.delay(kGearTaskDelay);
     gearEvent.period(kGearTaskPeriod);
     gearEvent.post();
 
-    Event<void()> speedDistanceEvent(&eventQueue,
+    Event<void()> speedDistanceEvent(&_eventQueue,
                                      callback(this, &BikeSystem::speedDistanceTask));
     speedDistanceEvent.delay(kSpeedDistanceTaskDelay);
     speedDistanceEvent.period(kSpeedDistanceTaskPeriod);
     speedDistanceEvent.post();
 
-    Event<void()> display1Event(&eventQueue, callback(this, &BikeSystem::displayTask1));
+    Event<void()> display1Event(&_eventQueue, callback(this, &BikeSystem::displayTask1));
     display1Event.delay(kDisplayTask1Delay);
     display1Event.period(kDisplayTask1Period);
     display1Event.post();
 
-    Event<void()> resetEvent(&eventQueue, callback(this, &BikeSystem::resetTask));
+    Event<void()> resetEvent(&_eventQueue, callback(this, &BikeSystem::resetTask));
     resetEvent.delay(kResetTaskDelay);
     resetEvent.period(kResetTaskPeriod);
     resetEvent.post();
 
-    Event<void()> temperatureEvent(&eventQueue,
+    Event<void()> temperatureEvent(&_eventQueue,
                                    callback(this, &BikeSystem::temperatureTask));
     temperatureEvent.delay(kTemperatureTaskDelay);
     temperatureEvent.period(kTemperatureTaskPeriod);
     temperatureEvent.post();
 
-    Event<void()> display2Event(&eventQueue, callback(this, &BikeSystem::displayTask2));
+    Event<void()> display2Event(&_eventQueue, callback(this, &BikeSystem::displayTask2));
     display2Event.delay(kDisplayTask2Delay);
     display2Event.period(kDisplayTask2Period);
     display2Event.post();
 
 #if !defined(MBED_TEST_MODE)
-    Event<void()> cpuStatsEvent(&eventQueue,
+    Event<void()> cpuStatsEvent(&_eventQueue,
                                 callback(&_cpuLogger, &advembsof::CPULogger::printStats));
     cpuStatsEvent.delay(kMajorCycleDuration);
     cpuStatsEvent.period(kMajorCycleDuration);
     cpuStatsEvent.post();
 #endif
 
-    eventQueue.dispatch_forever();
+    _eventQueue.dispatch_forever();
 }
 
-void BikeSystem::stop() { core_util_atomic_store_bool(&_stopFlag, true); }
+void BikeSystem::stop() { _eventQueue.break_dispatch(); }
 
 #if defined(MBED_TEST_MODE)
 const advembsof::TaskLogger& BikeSystem::getTaskLogger() { return _taskLogger; }
