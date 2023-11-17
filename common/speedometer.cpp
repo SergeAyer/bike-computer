@@ -78,6 +78,9 @@ float Speedometer::getDistance() {
 }
 
 void Speedometer::reset() {
+    if (_cb != nullptr) {
+        _cb();
+    }
     _totalDistanceMutex.lock();
     _totalDistance = 0.0f;
     _totalDistanceMutex.unlock();
@@ -92,6 +95,10 @@ float Speedometer::getTraySize() const { return kTraySize; }
 
 std::chrono::milliseconds Speedometer::getCurrentPedalRotationTime() const {
     return _pedalRotationTime;
+}
+
+void Speedometer::setOnResetCallback(mbed::Callback<void()> cb) {
+    _cb = cb;
 }
 
 #endif  // defined(MBED_TEST_MODE)

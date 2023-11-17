@@ -31,9 +31,6 @@ namespace bike_computer {
 
 class Speedometer {
    public:
-    // Number of rotation count to wait before the device can deliver a speed
-    static constexpr uint32_t kInitialRotationCount = 10;
-
     explicit Speedometer(Timer& timer);  // NOLINT(runtime/references)
 
     // method used for setting the current pedal rotation time
@@ -57,6 +54,7 @@ class Speedometer {
     float getWheelCircumference() const;
     float getTraySize() const;
     std::chrono::milliseconds getCurrentPedalRotationTime() const;
+    void setOnResetCallback(mbed::Callback<void()> cb);
 #endif  // defined(MBED_TEST_MODE)
 
    private:
@@ -84,6 +82,10 @@ class Speedometer {
     uint8_t _gearSize    = 1;
 
     Thread _thread;
+
+#if defined(MBED_TEST_MODE)
+    mbed::Callback<void()> _cb;
+#endif
 };
 
 }  // namespace bike_computer
