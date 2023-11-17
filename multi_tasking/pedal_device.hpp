@@ -25,7 +25,6 @@
 #pragma once
 
 #include <chrono>
-#include <mstd_mutex>
 
 #include "constants.hpp"
 #include "mbed.h"
@@ -34,7 +33,7 @@ namespace multi_tasking {
 
 class PedalDevice {
    public:
-    PedalDevice(EventQueue& eventQueue,
+    PedalDevice(EventQueue& eventQueue,  // NOLINT(runtime/references)
                 mbed::Callback<void(const std::chrono::milliseconds&)> cb);
 
     // make the class non copyable

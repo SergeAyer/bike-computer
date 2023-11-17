@@ -42,11 +42,10 @@ static constexpr std::chrono::milliseconds kTemperatureTaskComputationTime = 100
 static constexpr std::chrono::milliseconds kMajorCycleDuration             = 1600ms;
 
 BikeSystem::BikeSystem()
-    : _gearDevice(_eventQueue, callback(this, &BikeSystem::onGearChanged)),
+    : _deferredISRThread(osPriorityNormal, OS_STACK_SIZE, nullptr, "deferredISRThread"),
+      _gearDevice(_eventQueue, callback(this, &BikeSystem::onGearChanged)),
       _pedalDevice(_eventQueue, callback(this, &BikeSystem::onRotationSpeedChanged)),
       _resetDevice(callback(this, &BikeSystem::onReset)),
-      _deferredISRThread(
-          osPriorityAboveNormal, OS_STACK_SIZE, nullptr, "deferredISRThread"),
       _speedometer(_timer),
       _cpuLogger(_timer) {}
 
@@ -84,10 +83,14 @@ void BikeSystem::start() {
     _eventQueue.dispatch_forever();
 }
 
-void BikeSystem::stop() { core_util_atomic_store_bool(&_stopFlag, true); }
+void BikeSystem::stop() {
+    _deferredISRThread.terminate();
+    _eventQueue.break_dispatch();
+}
 
 #if defined(MBED_TEST_MODE)
-const advembsof::TaskLogger& BikeSystem::getTaskLogger() { return _taskLogger; }
+const advembsof::TaskLogger& BikeSystem::getTaskLogger() const { return _taskLogger; }
+bike_computer::Speedometer& BikeSystem::getSpeedometer() { return _speedometer; }
 #endif  // defined(MBED_TEST_MODE)
 
 void BikeSystem::init() {
@@ -136,8 +139,10 @@ void BikeSystem::temperatureTask() {
 }
 
 void BikeSystem::resetTask() {
+#if !defined(MBED_TEST_MODE)
     tr_info("Reset task: response time is %" PRIu64 " usecs",
             (_timer.elapsed_time() - _resetTime).count());
+#endif  // !defined(MBED_TEST_MODE)
     _speedometer.reset();
 }
 

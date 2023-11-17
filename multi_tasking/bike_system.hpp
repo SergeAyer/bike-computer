@@ -57,13 +57,23 @@ class BikeSystem {
     void stop();
 
 #if defined(MBED_TEST_MODE)
-    const advembsof::TaskLogger& getTaskLogger();
+    const advembsof::TaskLogger& getTaskLogger() const;
+    bike_computer::Speedometer& getSpeedometer();
 #endif  // defined(MBED_TEST_MODE)
+
+    // these methods must be made public for test purposes only
+#if defined(MBED_TEST_MODE)
+
+   public:
+#else
+
+   private:
+#endif
+    void onReset();
 
    private:
     // private methods
     void init();
-    void onReset();
     void onGearChanged(uint8_t currentGear, uint8_t currentGearSize);
     void onRotationSpeedChanged(const std::chrono::milliseconds& pedalRotationTime);
     void temperatureTask();
@@ -75,9 +85,6 @@ class BikeSystem {
     // EventQueue used for serving deferred ISRs
     EventQueue _eventQueueForISRs;
     Thread _deferredISRThread;
-
-    // stop flag, used for stopping the super-loop (set in stop())
-    bool _stopFlag = false;
     // used for computing the reset response time
     std::chrono::microseconds _resetTime = std::chrono::microseconds::zero();
     // timer instance used for loggint task time and used by ResetDevice
