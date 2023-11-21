@@ -91,6 +91,8 @@ void BikeSystem::stop() {
 #if defined(MBED_TEST_MODE)
 const advembsof::TaskLogger& BikeSystem::getTaskLogger() const { return _taskLogger; }
 bike_computer::Speedometer& BikeSystem::getSpeedometer() { return _speedometer; }
+GearDevice& BikeSystem::getGearDevice() { return _gearDevice; }
+uint8_t BikeSystem::getCurrentGear() const { return _currentGear; }
 #endif  // defined(MBED_TEST_MODE)
 
 void BikeSystem::init() {
@@ -119,7 +121,6 @@ void BikeSystem::onReset() {
 }
 
 void BikeSystem::onGearChanged(uint8_t currentGear, uint8_t currentGearSize) {
-    tr_debug("onGearChanged");
     _currentGear = currentGear;
     _speedometer.setGearSize(currentGearSize);
 }

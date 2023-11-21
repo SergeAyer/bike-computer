@@ -24,6 +24,7 @@
 
 #include <chrono>
 
+#include "constants.hpp"
 #include "greentea-client/test_env.h"
 #include "mbed.h"
 #include "multi_tasking/bike_system.hpp"
@@ -243,6 +244,63 @@ static void test_reset_multi_tasking_bike_system() {
     // stop the bike system
     bikeSystem.stop();
 }
+
+static void test_gear_multi_tasking_bike_system() {
+    // create the BikeSystem instance
+    multi_tasking::BikeSystem bikeSystem;
+
+    // run the bike system in a separate thread
+    Thread thread;
+    thread.start(callback(&bikeSystem, &multi_tasking::BikeSystem::start));
+
+    // let the bike system run for 2 secs
+    ThisThread::sleep_for(2s);
+
+    // start the timer instance
+    timer.start();
+
+    // check for reset response time
+    constexpr uint8_t kNbrOfGearChange = 10;
+    for (uint8_t i = 0; i < kNbrOfGearChange; i++) {
+        // take time before reset
+        auto startTime = timer.elapsed_time();
+
+        // increase current gear
+        uint8_t currentGear = bikeSystem.getCurrentGear();
+        bikeSystem.getGearDevice().onUp();
+
+        // let the bike system run for 100 msecs
+        ThisThread::sleep_for(100ms);
+
+        uint8_t newCurrentGear = bikeSystem.getCurrentGear();
+        if (currentGear == bike_computer::kMaxGear) {
+            TEST_ASSERT_EQUAL_UINT8(currentGear, newCurrentGear);
+        } else {
+            TEST_ASSERT_EQUAL_UINT8(currentGear + 1, newCurrentGear);
+        }
+
+        // decrease current gear
+        currentGear = bikeSystem.getCurrentGear();
+        bikeSystem.getGearDevice().onDown();
+
+        // let the bike system run for 100 msecs
+        ThisThread::sleep_for(100ms);
+
+        newCurrentGear = bikeSystem.getCurrentGear();
+        if (currentGear == bike_computer::kMinGear) {
+            TEST_ASSERT_EQUAL_UINT8(currentGear, newCurrentGear);
+        } else {
+            TEST_ASSERT_EQUAL_UINT8(currentGear - 1, newCurrentGear);
+        }
+
+        // let the bike system run for 2 secs
+        ThisThread::sleep_for(2s);
+    }
+
+    // stop the bike system
+    bikeSystem.stop();
+}
+
 static utest::v1::status_t greentea_setup(const size_t number_of_cases) {
     // Here, we specify the timeout (60s) and the host test (a built-in host test or the
     // name of our Python file)
@@ -257,7 +315,8 @@ static Case cases[] = {
     Case("test bike system with event queue", test_bike_system_event_queue),
     Case("test bike system with event", test_bike_system_with_event),
     Case("test multi-tasking bike system", test_multi_tasking_bike_system),
-    Case("test reset multi-tasking bike system", test_reset_multi_tasking_bike_system)};
+    Case("test reset multi-tasking bike system", test_reset_multi_tasking_bike_system),
+    Case("test gear multi-tasking bike system", test_gear_multi_tasking_bike_system)};
 
 static Specification specification(greentea_setup, cases);
 

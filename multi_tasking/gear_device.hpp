@@ -38,10 +38,18 @@ class GearDevice {
     GearDevice(GearDevice&)            = delete;
     GearDevice& operator=(GearDevice&) = delete;
 
+#if defined(MBED_TEST_MODE)
+
+   public:
+#else
+
    private:
+#endif
     // private methods
     void onUp();
     void onDown();
+
+   private:
     void postEvent();
 
     // data members
