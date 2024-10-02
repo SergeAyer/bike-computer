@@ -6,9 +6,9 @@ on:
 jobs:
   build-cli-v1:
     container:
-      image: ghcr.io/armmbed/mbed-os-env:master-latest
+      image: ghcr.io/armmbed/mbed-os-env:master-2022.05.21t04.23.55
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     strategy:
       matrix:
